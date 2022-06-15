@@ -1,0 +1,7 @@
+<interface>
+    <object class="GtkApplicationWindow" id="window">
+        <child>
+            <object class="GtkTextView" id="text"/>
+        </child>
+    </object>
+</interface>
