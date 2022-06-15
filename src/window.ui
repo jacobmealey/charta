@@ -2,7 +2,6 @@
     <object class="GtkApplicationWindow" id="window">
         <child>
             <object class="GtkScrolledWindow" id="scroll">
-                <child><object class="GtkTextView" id="text"/></child>
             </object>
         </child>
     </object>

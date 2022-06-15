@@ -1,6 +1,8 @@
+mod note_view;
+
+use note_view::NoteView;
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, TextView, ScrolledWindow,
-          WrapMode};
+use gtk::{Application, ApplicationWindow, ScrolledWindow};
 
 fn main() {
     println!("Hello, world!");
@@ -21,21 +23,18 @@ fn build_ui(app: &Application) {
         .expect("Could not get object 'window' from builder");
 
 
-    let text: TextView = builder
-        .object("text")
-        .expect("Could not get object 'button' from builder");
-
-    text.set_wrap_mode(WrapMode::Word);
+    let text: NoteView = NoteView::new();
+    text.setup();
 
     let scroll: ScrolledWindow = builder
         .object("scroll")
         .expect("Could not get object 'scroll' from builder");
 
+
     window.set_default_width(650);
     window.set_default_height(420);
     window.set_title(Some("Notes"));
 
-    text.set_editable(true);
     
     window.set_application(Some(app));
 
