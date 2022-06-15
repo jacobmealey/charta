@@ -1,5 +1,6 @@
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, TextView, ScrolledWindow};
+use gtk::{Application, ApplicationWindow, TextView, ScrolledWindow,
+          WrapMode};
 
 fn main() {
     println!("Hello, world!");
@@ -24,6 +25,7 @@ fn build_ui(app: &Application) {
         .object("text")
         .expect("Could not get object 'button' from builder");
 
+    text.set_wrap_mode(WrapMode::Word);
 
     let scroll: ScrolledWindow = builder
         .object("scroll")
@@ -38,7 +40,7 @@ fn build_ui(app: &Application) {
     window.set_application(Some(app));
 
     // this is going to do something with a time for autosaving
-    text.buffer().connect_changed(move |buff| {
+    text.buffer().connect_changed(move |_buff| {
         //let begin_itter = buff.start_iter(); // << why was that so hard ??
         //let end_itter = buff.end_iter();
         //println!("{}", buff.text(&begin_itter, &end_itter, true));
