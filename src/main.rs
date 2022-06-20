@@ -24,7 +24,7 @@ fn build_ui(app: &Application) {
 
 
     let text: NoteView = NoteView::new();
-    text.setup();
+    text.setup("Test".to_string());
 
     let scroll: ScrolledWindow = builder
         .object("scroll")

@@ -16,7 +16,7 @@ impl NoteView{
         Object::new(&[]).expect("Failed to create `NoteView`.")
     }
 
-    pub fn setup(&self) {
+    pub fn setup(&self, name: String) {
         self.set_editable(true);
         self.set_wrap_mode(WrapMode::Word);
         self.set_left_margin(60);
@@ -24,4 +24,5 @@ impl NoteView{
         self.set_top_margin(24);
         self.set_bottom_margin(24);
     }
+   
 }

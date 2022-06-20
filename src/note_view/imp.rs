@@ -1,9 +1,12 @@
 
 use gtk::subclass::prelude::*;
 use gtk::{glib};
+use std::cell::Cell;
 
 #[derive(Default)]
-pub struct NoteView;
+pub struct NoteView {
+    name: Cell<u32>
+}
 
 #[glib::object_subclass]
 impl ObjectSubclass for NoteView {
@@ -13,6 +16,11 @@ impl ObjectSubclass for NoteView {
 
 }
 
-impl ObjectImpl for NoteView {}
+impl ObjectImpl for NoteView {
+    fn constructed(&self, obj: &Self::Type) {
+        self.parent_constructed(obj);
+        println!("{}", &self.name.get());
+    }
+}
 impl TextViewImpl for NoteView {}
 impl WidgetImpl for NoteView {}
