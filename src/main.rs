@@ -3,6 +3,7 @@ mod note_view;
 use note_view::NoteViewObject;
 use gtk::prelude::*;
 use std::rc::Rc;
+use std::cell::RefCell;
 use gtk::{Application, ApplicationWindow, ScrolledWindow, 
           StackSidebar, Grid, Stack, HeaderBar, Button};
 
@@ -28,6 +29,7 @@ fn build_ui(app: &Application) {
     window.set_titlebar(Some(&header));
     let grid: Grid = Grid::new();
 
+    let note_count = Rc::new(RefCell::new(1));
 
     let stack_rc = Rc::new(Stack::new());
     stack_rc.set_hexpand(true);
@@ -46,16 +48,18 @@ fn build_ui(app: &Application) {
     button.set_label("New");
 
     button.connect_clicked(move |_| {
+        let mut update_count = note_count.borrow_mut();
         let rc = stack_rc.clone();
         println!("Creating new note");
-        let title = format!("New Note");
+        let title = format!("New Note {}", update_count);
         
         let scroll: ScrolledWindow = ScrolledWindow::new();
         let noteview: NoteViewObject = NoteViewObject::new();
         noteview.setup();
         scroll.set_child(Some(&noteview));
 
-        let name = format!("new_note");
+        let name = format!("new_note{}", update_count);
+        *update_count += 1;
         rc.add_titled(&scroll, Some(&name), &title);
     });
 
