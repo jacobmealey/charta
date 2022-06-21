@@ -2,10 +2,12 @@ mod note_view;
 
 use note_view::NoteViewObject;
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, ScrolledWindow, StackSidebar, Grid, Stack};
+use gtk::{Application, ApplicationWindow, ScrolledWindow, StackSidebar, Grid, Stack, HeaderBar};
 
 fn main() {
-    println!("Hello, world!");
+    println!("Notes");
+    println!("Author: Jacob Mealey");
+    println!("Website: jacobmealey.xyz");
     let app = Application::builder()
         .application_id("xyz.jacobmealey.Notes")
         .build();
@@ -20,6 +22,14 @@ fn build_ui(app: &Application) {
     .application(app)
     .build();
 
+    let header = HeaderBar::new();
+    window.set_titlebar(Some(&header));
+
+    let button = Button::new();
+    button.set_label("New");
+
+    header.pack_start(Some(&button))
+
     let grid: Grid = Grid::new();
 
     let stack: Stack = Stack::new();
@@ -33,11 +43,9 @@ fn build_ui(app: &Application) {
 
     grid.attach(&sidebar, 0, 0, 1, 1);
 
+
     for i in 1..4 {
         let title = format!("Page {}", i);
-        //let label: Label = Label::builder()
-        //    .label(&title)
-        //    .build();
         
         let scroll: ScrolledWindow = ScrolledWindow::new();
         let noteview: NoteViewObject = NoteViewObject::new();
@@ -51,7 +59,6 @@ fn build_ui(app: &Application) {
     window.set_default_width(650);
     window.set_default_height(420);
     window.set_title(Some("Notes"));
-
     
     window.set_application(Some(app));
 
