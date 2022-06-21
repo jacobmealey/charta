@@ -2,7 +2,10 @@ mod note_view;
 
 use note_view::NoteViewObject;
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, ScrolledWindow, StackSidebar, Grid, Stack, HeaderBar};
+use std::rc::Rc;
+use gtk::{Application, ApplicationWindow, ScrolledWindow, 
+          StackSidebar, Grid, Stack, HeaderBar, Button};
+
 
 fn main() {
     println!("Notes");
@@ -24,12 +27,6 @@ fn build_ui(app: &Application) {
 
     let header = HeaderBar::new();
     window.set_titlebar(Some(&header));
-
-    let button = Button::new();
-    button.set_label("New");
-
-    header.pack_start(Some(&button))
-
     let grid: Grid = Grid::new();
 
     let stack: Stack = Stack::new();
@@ -42,6 +39,16 @@ fn build_ui(app: &Application) {
     sidebar.set_stack(&stack);
 
     grid.attach(&sidebar, 0, 0, 1, 1);
+
+
+    let button = Button::new();
+    button.set_label("New");
+
+    button.connect_clicked(move |_| {
+        println!("Creating new note");
+    });
+
+    header.pack_start(&button);
 
 
     for i in 1..4 {
@@ -61,13 +68,6 @@ fn build_ui(app: &Application) {
     window.set_title(Some("Notes"));
     
     window.set_application(Some(app));
-
-    //// this is going to do something with a time for autosaving
-    //text.buffer().connect_changed(move |buff| {
-        //let begin_itter = buff.start_iter(); // << why was that so hard ??
-        //let end_itter = buff.end_iter();
-        //println!("{}", buff.text(&begin_itter, &end_itter, true));
-    //});
 
     // scroll.set_child(Some(&text));
     // stackpage.set_child(Some(&scroll))
