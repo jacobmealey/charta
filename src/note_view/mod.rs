@@ -19,8 +19,8 @@ impl NoteViewObject {
     pub fn setup(&self) {
         self.set_editable(true);
         self.set_wrap_mode(WrapMode::Word);
-        self.set_left_margin(60);
-        self.set_right_margin(60);
+        self.set_left_margin(35);
+        self.set_right_margin(35);
         self.set_top_margin(24);
         self.set_bottom_margin(24);
     }

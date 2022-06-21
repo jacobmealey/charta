@@ -2,9 +2,7 @@
 
 use gtk::subclass::prelude::*;
 use gtk::{glib};
-use std::cell::Cell;
 use std::rc::Rc;
-use std::cell::RefCell;
 
 use crate::note_view::NoteViewData;
 

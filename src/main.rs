@@ -2,8 +2,7 @@ mod note_view;
 
 use note_view::NoteViewObject;
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, ScrolledWindow, StackSidebar, 
-          Label, Grid, StackPage, Stack};
+use gtk::{Application, ApplicationWindow, ScrolledWindow, StackSidebar, Grid, Stack};
 
 fn main() {
     println!("Hello, world!");
@@ -42,6 +41,7 @@ fn build_ui(app: &Application) {
         
         let scroll: ScrolledWindow = ScrolledWindow::new();
         let noteview: NoteViewObject = NoteViewObject::new();
+        noteview.setup();
         scroll.set_child(Some(&noteview));
 
         let name = format!("label{}", i);
