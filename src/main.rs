@@ -1,8 +1,9 @@
 mod note_view;
 
-use note_view::NoteView;
+use note_view::NoteViewObject;
 use gtk::prelude::*;
-use gtk::{Application, ApplicationWindow, ScrolledWindow};
+use gtk::{Application, ApplicationWindow, ScrolledWindow, StackSidebar, 
+          Label, Grid, StackPage, Stack};
 
 fn main() {
     println!("Hello, world!");
@@ -16,20 +17,36 @@ fn main() {
 }
 
 fn build_ui(app: &Application) {
-    let builder = gtk::Builder::from_string(include_str!("window.ui"));
-    
-    let window: ApplicationWindow = builder
-        .object("window")
-        .expect("Could not get object 'window' from builder");
+    let window: ApplicationWindow = ApplicationWindow::builder()
+    .application(app)
+    .build();
 
+    let grid: Grid = Grid::new();
 
-    let text: NoteView = NoteView::new();
-    text.setup("Test".to_string());
+    let stack: Stack = Stack::new();
+    stack.set_hexpand(true);
+    stack.set_vexpand(true);
 
-    let scroll: ScrolledWindow = builder
-        .object("scroll")
-        .expect("Could not get object 'scroll' from builder");
+    grid.attach(&stack, 1, 0, 1, 1);
 
+    let sidebar: StackSidebar = StackSidebar::new();
+    sidebar.set_stack(&stack);
+
+    grid.attach(&sidebar, 0, 0, 1, 1);
+
+    for i in 1..4 {
+        let title = format!("Page {}", i);
+        //let label: Label = Label::builder()
+        //    .label(&title)
+        //    .build();
+        
+        let scroll: ScrolledWindow = ScrolledWindow::new();
+        let noteview: NoteViewObject = NoteViewObject::new();
+        scroll.set_child(Some(&noteview));
+
+        let name = format!("label{}", i);
+        stack.add_titled(&scroll, Some(&name), &title);
+    }
 
     window.set_default_width(650);
     window.set_default_height(420);
@@ -38,14 +55,16 @@ fn build_ui(app: &Application) {
     
     window.set_application(Some(app));
 
-    // this is going to do something with a time for autosaving
-    text.buffer().connect_changed(move |_buff| {
+    //// this is going to do something with a time for autosaving
+    //text.buffer().connect_changed(move |buff| {
         //let begin_itter = buff.start_iter(); // << why was that so hard ??
         //let end_itter = buff.end_iter();
         //println!("{}", buff.text(&begin_itter, &end_itter, true));
-    });
+    //});
 
-    scroll.set_child(Some(&text));
-    window.set_child(Some(&scroll));
+    // scroll.set_child(Some(&text));
+    // stackpage.set_child(Some(&scroll))
+    // stack.set_child(Some(&stackpage));
+    window.set_child(Some(&grid));
     window.present();
 }

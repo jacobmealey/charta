@@ -1,8 +1,0 @@
-<interface>
-    <object class="GtkApplicationWindow" id="window">
-        <child>
-            <object class="GtkScrolledWindow" id="scroll">
-            </object>
-        </child>
-    </object>
-</interface>
