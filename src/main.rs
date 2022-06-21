@@ -3,6 +3,7 @@ mod note_view;
 use note_view::NoteViewObject;
 use gtk::prelude::*;
 use std::rc::Rc;
+use std::cell::RefCell;
 use gtk::{Application, ApplicationWindow, ScrolledWindow, 
           StackSidebar, Grid, Stack, HeaderBar, Button};
 
@@ -30,13 +31,15 @@ fn build_ui(app: &Application) {
     let grid: Grid = Grid::new();
 
     let stack: Stack = Stack::new();
-    stack.set_hexpand(true);
-    stack.set_vexpand(true);
 
-    grid.attach(&stack, 1, 0, 1, 1);
+    let stack_rc = Rc::new(Stack::new());
+    stack_rc.set_hexpand(true);
+    stack_rc.set_vexpand(true);
+
+    grid.attach(&*stack_rc, 1, 0, 1, 1);
 
     let sidebar: StackSidebar = StackSidebar::new();
-    sidebar.set_stack(&stack);
+    sidebar.set_stack(&*stack_rc);
 
     grid.attach(&sidebar, 0, 0, 1, 1);
 
@@ -44,8 +47,19 @@ fn build_ui(app: &Application) {
     let button = Button::new();
     button.set_label("New");
 
+
     button.connect_clicked(move |_| {
+        let rc = stack_rc.clone();
         println!("Creating new note");
+        let title = format!("New Note");
+        
+        let scroll: ScrolledWindow = ScrolledWindow::new();
+        let noteview: NoteViewObject = NoteViewObject::new();
+        noteview.setup();
+        scroll.set_child(Some(&noteview));
+
+        let name = format!("new_note");
+        rc.add_titled(&scroll, Some(&name), &title);
     });
 
     header.pack_start(&button);
