@@ -3,10 +3,8 @@ mod note_view;
 use note_view::NoteViewObject;
 use gtk::prelude::*;
 use std::rc::Rc;
-use std::cell::RefCell;
 use gtk::{Application, ApplicationWindow, ScrolledWindow, 
           StackSidebar, Grid, Stack, HeaderBar, Button};
-
 
 fn main() {
     println!("Notes");
@@ -30,12 +28,13 @@ fn build_ui(app: &Application) {
     window.set_titlebar(Some(&header));
     let grid: Grid = Grid::new();
 
-    let stack: Stack = Stack::new();
 
     let stack_rc = Rc::new(Stack::new());
     stack_rc.set_hexpand(true);
     stack_rc.set_vexpand(true);
 
+    // this is a very cursed line tbh. we are dereferencing the rc 
+    // and the borrowing the stack
     grid.attach(&*stack_rc, 1, 0, 1, 1);
 
     let sidebar: StackSidebar = StackSidebar::new();
@@ -43,10 +42,8 @@ fn build_ui(app: &Application) {
 
     grid.attach(&sidebar, 0, 0, 1, 1);
 
-
     let button = Button::new();
     button.set_label("New");
-
 
     button.connect_clicked(move |_| {
         let rc = stack_rc.clone();
@@ -63,19 +60,6 @@ fn build_ui(app: &Application) {
     });
 
     header.pack_start(&button);
-
-
-    for i in 1..4 {
-        let title = format!("Page {}", i);
-        
-        let scroll: ScrolledWindow = ScrolledWindow::new();
-        let noteview: NoteViewObject = NoteViewObject::new();
-        noteview.setup();
-        scroll.set_child(Some(&noteview));
-
-        let name = format!("label{}", i);
-        stack.add_titled(&scroll, Some(&name), &title);
-    }
 
     window.set_default_width(650);
     window.set_default_height(420);
