@@ -45,7 +45,6 @@ fn build_ui(app: &Application) {
     // create a new note when user clicks the new_note_button
     new_note_button.set_label("New");
     new_note_button.connect_clicked(move |_| {
-
         // get references to existing state
         let mut update_count = note_count.borrow_mut();
         let rc = stack_rc.clone();

@@ -29,5 +29,6 @@ impl NoteViewObject {
 
 #[derive(Default)]
 pub struct NoteViewData {
-    pub name: String
+    pub name: String,
+
 }
