@@ -1,9 +1,7 @@
 use gtk::subclass::prelude::*;
 use gtk::{glib};
-use std::cell::RefCell;
 use std::time;
 use std::thread;
-use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 
 use crate::note_view::NoteViewData;
@@ -26,27 +24,31 @@ impl ObjectSubclass for NoteViewObject {
 
 impl ObjectImpl for NoteViewObject {
     fn constructed(&self, obj: &Self::Type) {
-        let own_vals = Arc::clone(&self.vals);
+
+        // Signal handler for the text buffer
+        let vals_clone_buff = Arc::clone(&self.vals);
         obj.buffer().connect_changed( move |_arg1| {
-            let mut this = own_vals.lock().unwrap();
-            let timer = (*this).timer;
+            let mut this = vals_clone_buff.lock().unwrap();
             (*this).timer = 0;
             println!("Key pressed -- resetting timer");
 
         });
 
 
-        let vv = Arc::clone(&self.vals);
+        // Thread for updating NoteViewData.timer and 
+        // saving the contents of the buffer 
+        let vals_clone_t = Arc::clone(&self.vals);
         thread::spawn(move || {
             loop {
-                let mut this = vv.lock().unwrap();
+                let mut this = vals_clone_t.lock().unwrap();
+                println!("incrementing timer");
                 (*this).timer += 1;
                 if (*this).timer == 5 {
                     println!("5 seconds elapsed Saving...");
                 }
-                drop(this);
+                // Drop lock before dela 
+                drop(this); 
                 thread::sleep(time::Duration::from_millis(1000));
-                println!("incrementing timer");
             }
         });
 

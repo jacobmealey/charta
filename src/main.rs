@@ -54,12 +54,10 @@ fn build_ui(app: &Application) {
         let name = format!("new_note{}", update_count);
         *update_count += 1;
 
-
         // create a new noteview instance and bing 
         let scroll: ScrolledWindow = ScrolledWindow::new();
         let noteview: NoteViewObject = NoteViewObject::new();
         noteview.setup();
-
 
         scroll.set_child(Some(&noteview));
         rc.add_titled(&scroll, Some(&name), &title);
