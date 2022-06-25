@@ -4,6 +4,7 @@ use glib::Object;
 use gtk::glib;
 use gtk::prelude::*;
 use gtk::WrapMode;
+
 glib::wrapper! {
     pub struct NoteViewObject(ObjectSubclass<imp::NoteViewObject>)
     @extends gtk::TextView, gtk::Widget,
@@ -30,5 +31,6 @@ impl NoteViewObject {
 #[derive(Default)]
 pub struct NoteViewData {
     pub name: String,
+    pub timer: u32,
 
 }
