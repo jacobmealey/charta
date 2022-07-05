@@ -27,11 +27,11 @@ impl ObjectImpl for NoteViewObject {
 
         // Signal handler for the text buffer
         let vals_clone_buff = Arc::clone(&self.vals);
-        obj.buffer().connect_changed( move |_arg1| {
+        obj.buffer().connect_changed( move |arg1| {
             let mut this = vals_clone_buff.lock().unwrap();
             (*this).timer = 0;
+            (*this).buffer = arg1.slice(&arg1.start_iter(), &arg1.end_iter(), false).to_string();
             println!("Key pressed -- resetting timer");
-
         });
 
 
@@ -41,12 +41,13 @@ impl ObjectImpl for NoteViewObject {
         thread::spawn(move || {
             loop {
                 let mut this = vals_clone_t.lock().unwrap();
-                println!("incrementing timer");
                 (*this).timer += 1;
+
                 if (*this).timer == 5 {
                     println!("5 seconds elapsed Saving...");
+                    println!("{}", (*this).buffer);
                 }
-                // Drop lock before dela 
+                // Drop lock before delay
                 drop(this); 
                 thread::sleep(time::Duration::from_millis(1000));
             }
@@ -54,7 +55,9 @@ impl ObjectImpl for NoteViewObject {
 
         self.parent_constructed(obj);
     }
+
 }
+
 impl TextViewImpl for NoteViewObject {}
 impl WidgetImpl for NoteViewObject {}
 unsafe impl Send for NoteViewObject {}

@@ -1,9 +1,12 @@
-mod imp;
+pub mod imp;
 
 use glib::Object;
 use gtk::glib;
 use gtk::prelude::*;
+use std::sync::Arc;
 use gtk::WrapMode;
+use gtk::subclass::prelude::ObjectSubclassIsExt;
+use sqlite;
 
 glib::wrapper! {
     pub struct NoteViewObject(ObjectSubclass<imp::NoteViewObject>)
@@ -25,12 +28,32 @@ impl NoteViewObject {
         self.set_top_margin(24);
         self.set_bottom_margin(24);
     }
-   
+
+    pub fn set_name(&self, name: String) {
+        let vals = Arc::clone(&self.imp().vals);
+        vals.lock().unwrap().name = name;
+    }
+ 
+    pub fn set_file(&self, filename: String) {
+        let vals = Arc::clone(&self.imp().vals);
+        vals.lock().unwrap().filename = filename;
+    }
+    pub fn set_id(&self, id: u32) {
+        let vals = Arc::clone(&self.imp().vals);
+        vals.lock().unwrap().note_id = id;
+    }  
+
+    pub fn save(&self, conn: sqlite::Connection) {
+
+    }
+
 }
 
 #[derive(Default)]
 pub struct NoteViewData {
     pub name: String,
     pub timer: u32,
-
+    pub buffer: String,
+    pub filename: String,
+    pub note_id: u32,
 }

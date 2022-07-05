@@ -3,9 +3,12 @@ mod note_view;
 use note_view::NoteViewObject;
 use gtk::prelude::*;
 use std::rc::Rc;
+use std::sync::Arc;
 use std::cell::RefCell;
 use gtk::{Application, ApplicationWindow, ScrolledWindow, 
           StackSidebar, Grid, Stack, HeaderBar, Button};
+use sqlite;
+
 
 fn main() {
     println!("Notes");
@@ -16,7 +19,6 @@ fn main() {
         .build();
 
     app.connect_activate(build_ui);
-
     app.run();
 }
 
@@ -24,6 +26,9 @@ fn build_ui(app: &Application) {
     let window: ApplicationWindow = ApplicationWindow::builder()
     .application(app)
     .build();
+
+    let connection = sqlite::open("notes_db.sql").unwrap();
+    
 
     let header = HeaderBar::new();
     let grid: Grid = Grid::new();
@@ -41,6 +46,32 @@ fn build_ui(app: &Application) {
     grid.attach(&(*stack_rc), 1, 0, 1, 1);
     grid.attach(&sidebar, 0, 0, 1, 1);
     sidebar.set_stack(&(*stack_rc));
+
+    // load exisiting notes from sql
+    connection
+        .iterate("SELECT * FROM notes", |pairs| {
+            let rc = stack_rc.clone();
+
+            let (_, note_id) = pairs[0];
+            let (_, filename) = pairs[2];
+            let (_, name) = pairs[1];
+            println!("{}, {}", filename.unwrap(), name.unwrap());
+
+            let scroll: ScrolledWindow = ScrolledWindow::new();
+            let noteview: NoteViewObject = NoteViewObject::new();
+            noteview.setup();
+            noteview.set_name(name.unwrap().to_string());
+            noteview.set_file(filename.unwrap().to_string());
+            noteview.set_id(note_id.unwrap().parse::<u32>().unwrap()); 
+
+            scroll.set_child(Some(&noteview));
+            rc.add_titled(&scroll, 
+                          Some(&format!("note{}", &note_id.unwrap())[..]),
+                          &name.unwrap()[..]);
+            
+            true
+        }).unwrap();
+
 
     // create a new note when user clicks the new_note_button
     new_note_button.set_label("New");
