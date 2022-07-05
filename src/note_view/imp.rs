@@ -8,10 +8,26 @@ use crate::note_view::NoteViewData;
 use gtk::prelude::TextViewExt;
 use gtk::prelude::TextBufferExt;
 
+use sqlite::State;
+
 
 #[derive(Default)]
 pub struct NoteViewObject {
     pub vals: Arc<Mutex<NoteViewData>>
+}
+
+fn save(notes: &NoteViewData, conn: &sqlite::Connection) {
+    let qurrey = format!("SELECT file FROM notes WHERE note_id={}", notes.note_id);
+    let mut statement = conn
+        .prepare(qurrey)
+        .unwrap();
+   
+    while let State::Row  = statement.next().unwrap() {
+        println!("saving to: {}", statement.read::<String>(0).unwrap());
+            
+    }
+
+
 }
 
 #[glib::object_subclass]
@@ -44,8 +60,9 @@ impl ObjectImpl for NoteViewObject {
                 (*this).timer += 1;
 
                 if (*this).timer == 5 {
+                    let connection = sqlite::open("notes_db.sql").unwrap();
                     println!("5 seconds elapsed Saving...");
-                    println!("{}", (*this).buffer);
+                    save(&(*this), &connection);
                 }
                 // Drop lock before delay
                 drop(this); 

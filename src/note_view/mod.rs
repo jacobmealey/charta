@@ -43,9 +43,7 @@ impl NoteViewObject {
         vals.lock().unwrap().note_id = id;
     }  
 
-    pub fn save(&self, conn: sqlite::Connection) {
 
-    }
 
 }
 
