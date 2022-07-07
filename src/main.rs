@@ -5,8 +5,10 @@ use gtk::prelude::*;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::cell::RefCell;
+use std::fs;
 use gtk::{Application, ApplicationWindow, ScrolledWindow, 
-          StackSidebar, Grid, Stack, HeaderBar, Button};
+          StackSidebar, Grid, Stack, HeaderBar, Button, 
+          TextBuffer};
 use sqlite;
 
 
@@ -59,12 +61,26 @@ fn build_ui(app: &Application) {
 
             let scroll: ScrolledWindow = ScrolledWindow::new();
             let noteview: NoteViewObject = NoteViewObject::new();
+            
             noteview.setup();
             noteview.set_name(name.unwrap().to_string());
             noteview.set_file(filename.unwrap().to_string());
             noteview.set_id(note_id.unwrap().parse::<u32>().unwrap()); 
+            let read_in = fs::read_to_string(noteview.get_file()).expect("Unable to read file");
+            
+
+            noteview.set_buffer(Some(&TextBuffer::builder()
+                                .text(&read_in)
+                                .build()));
 
             scroll.set_child(Some(&noteview));
+
+            noteview.buffer().connect_changed( move |arg1| {
+                noteview.set_timer(0);
+                noteview.set_buffstring(&arg1.slice(&arg1.start_iter(), &arg1.end_iter(), false).to_string());
+                println!("Key pressed -- resetting timer");
+            });
+
             rc.add_titled(&scroll, 
                           Some(&format!("note{}", &note_id.unwrap())[..]),
                           &name.unwrap()[..]);

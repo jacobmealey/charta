@@ -43,7 +43,23 @@ impl NoteViewObject {
         vals.lock().unwrap().note_id = id;
     }  
 
+    pub fn set_timer(&self, time: u32) {
+        let vals = Arc::clone(&self.imp().vals);
+        vals.lock().unwrap().timer = time;
+    }  
 
+    pub fn set_buffstring(&self, buffstring: &String) {
+        let vals = Arc::clone(&self.imp().vals);
+        vals.lock().unwrap().buffer = buffstring.to_string();
+    }  
+
+
+
+    pub fn get_file(&self) -> String {
+        let vals = Arc::clone(&self.imp().vals);
+        let filename = &vals.lock().unwrap().filename; 
+        filename.to_string()
+    }
 
 }
 

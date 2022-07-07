@@ -1,12 +1,14 @@
-use gtk::subclass::prelude::*;
-use gtk::{glib};
+use crate::note_view::NoteViewData;
+
 use std::time;
 use std::thread;
 use std::sync::{Arc, Mutex};
+use std::fs;
 
-use crate::note_view::NoteViewData;
 use gtk::prelude::TextViewExt;
 use gtk::prelude::TextBufferExt;
+use gtk::subclass::prelude::*;
+use gtk::{glib};
 
 use sqlite::State;
 
@@ -23,8 +25,9 @@ fn save(notes: &NoteViewData, conn: &sqlite::Connection) {
         .unwrap();
    
     while let State::Row  = statement.next().unwrap() {
-        println!("saving to: {}", statement.read::<String>(0).unwrap());
-            
+        let filename = statement.read::<String>(0).unwrap();
+        println!("saving to: {}", filename);
+        fs::write(filename, &notes.buffer).expect("Unable to write file");
     }
 
 
