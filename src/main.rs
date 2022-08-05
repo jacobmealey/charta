@@ -7,9 +7,14 @@ use std::sync::Arc;
 use std::cell::RefCell;
 use std::fs;
 use gtk::{Application, ApplicationWindow, ScrolledWindow, 
-          StackSidebar, Grid, Stack, HeaderBar, Button, 
-          TextBuffer};
+    StackSidebar, Grid, Stack, HeaderBar, Button, 
+    TextBuffer};
 use sqlite;
+use sqlite::State;
+use std::thread;
+use std::time;
+
+use crate::note_view::NoteViewData;
 
 
 fn main() {
@@ -26,11 +31,10 @@ fn main() {
 
 fn build_ui(app: &Application) {
     let window: ApplicationWindow = ApplicationWindow::builder()
-    .application(app)
-    .build();
+        .application(app)
+        .build();
 
-    let connection = sqlite::open("notes_db.sql").unwrap();
-    
+    let connection = Arc::new(sqlite::open("notes_db.sql").unwrap());
 
     let header = HeaderBar::new();
     let grid: Grid = Grid::new();
@@ -61,30 +65,32 @@ fn build_ui(app: &Application) {
 
             let scroll: ScrolledWindow = ScrolledWindow::new();
             let noteview: NoteViewObject = NoteViewObject::new();
-            
+
             noteview.setup();
-            noteview.set_name(name.unwrap().to_string());
-            noteview.set_file(filename.unwrap().to_string());
+            noteview.set_name(&name.unwrap().to_string());
+            noteview.set_file(&filename.unwrap().to_string());
             noteview.set_id(note_id.unwrap().parse::<u32>().unwrap()); 
             let read_in = fs::read_to_string(noteview.get_file()).expect("Unable to read file");
-            
+
 
             noteview.set_buffer(Some(&TextBuffer::builder()
-                                .text(&read_in)
-                                .build()));
+                                     .text(&read_in)
+                                     .build()));
 
+            new_note_bindings(&noteview);
             scroll.set_child(Some(&noteview));
-
             noteview.buffer().connect_changed( move |arg1| {
                 noteview.set_timer(0);
-                noteview.set_buffstring(&arg1.slice(&arg1.start_iter(), &arg1.end_iter(), false).to_string());
+                noteview.set_buffstring(&arg1.slice(&arg1.start_iter(), 
+                                                    &arg1.end_iter(), 
+                                                    false).to_string());
                 println!("Key pressed -- resetting timer");
             });
 
             rc.add_titled(&scroll, 
                           Some(&format!("note{}", &note_id.unwrap())[..]),
                           &name.unwrap()[..]);
-            
+
             true
         }).unwrap();
 
@@ -96,21 +102,40 @@ fn build_ui(app: &Application) {
         let mut update_count = note_count.borrow_mut();
         let rc = stack_rc.clone();
 
-        println!("Creating new note {}", update_count);
-        let title = format!("New Note {}", update_count);
-        let name = format!("new_note{}", update_count);
         *update_count += 1;
+        println!("Creating new note {}", update_count);
+        let name= format!("New Note {}", update_count);
+        let filename = format!("new_note{}.txt", update_count);
 
         // create a new noteview instance and bing 
         let scroll: ScrolledWindow = ScrolledWindow::new();
         let noteview: NoteViewObject = NoteViewObject::new();
         noteview.setup();
+        noteview.set_name(&name);
+        noteview.set_file(&filename);
+        noteview.set_id(*update_count + 1);
+
+        // push new note into database
+        let querry = format!("INSERT INTO notes VALUES ({}, \"{}\", \"{}\")", 
+                             noteview.get_id(), 
+                             noteview.get_name(), 
+                             noteview.get_file());
+        println!("{}", querry);
+        connection.execute(querry).unwrap();
 
         scroll.set_child(Some(&noteview));
-        rc.add_titled(&scroll, Some(&name), &title);
+        new_note_bindings(&noteview);
+        noteview.buffer().connect_changed( move |arg1| {
+            noteview.set_timer(0);
+            noteview.set_buffstring(&arg1.slice(&arg1.start_iter(), 
+                                                &arg1.end_iter(), 
+                                                false).to_string());
+            println!("Key pressed -- resetting timer");
+        });
+        rc.add_titled(&scroll, Some(&name), &name);
     });
 
-    
+
 
 
     // add button to header
@@ -125,3 +150,35 @@ fn build_ui(app: &Application) {
     window.set_child(Some(&grid));
     window.present();
 }
+
+fn save(notes: &NoteViewData, conn: &sqlite::Connection) {
+    let qurrey = format!("SELECT file FROM notes WHERE note_id={}", notes.note_id);
+    println!("{}", qurrey);
+    let mut statement = conn
+        .prepare(qurrey)
+        .unwrap();
+
+    while let State::Row  = statement.next().unwrap() {
+        let filename = statement.read::<String>(0).unwrap();
+        println!("saving to: {}", filename);
+        fs::write(filename, &notes.buffer).expect("Unable to write file");
+    }
+}
+
+
+fn new_note_bindings(noteview: &NoteViewObject) {
+    let vals_clone_t = noteview.get_vals();
+    thread::spawn(move || {
+        loop {
+            let mut vals = vals_clone_t.lock().unwrap();
+            (*vals).timer += 1;
+            let conn = sqlite::open("notes_db.sql").unwrap();
+            if (*vals).timer == 5 {
+                save(&(*vals), &conn);
+            }
+            drop(vals);
+            thread::sleep(time::Duration::from_millis(500));
+        }
+    });
+}
+
