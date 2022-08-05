@@ -6,9 +6,16 @@ use std::rc::Rc;
 use std::sync::Arc;
 use std::cell::RefCell;
 use std::fs;
-use gtk::{Application, ApplicationWindow, ScrolledWindow, 
-    StackSidebar, Grid, Stack, HeaderBar, Button, 
-    TextBuffer};
+use gtk::{Application, 
+          ApplicationWindow, 
+          ScrolledWindow, 
+          StackSidebar, 
+          Grid, 
+          Stack, 
+          HeaderBar, 
+          Button, 
+          TextBuffer,
+          EditableLabel};
 use sqlite;
 use sqlite::State;
 use std::thread;
@@ -38,10 +45,12 @@ fn build_ui(app: &Application) {
 
     let header = HeaderBar::new();
     let grid: Grid = Grid::new();
+    let active_note_grid = Grid::new();
     let note_count = Rc::new(RefCell::new(1));
     let stack_rc = Rc::new(Stack::new());
     let sidebar: StackSidebar = StackSidebar::new();
     let new_note_button = Button::new();
+    let note_title = EditableLabel::new("damn note");
 
     // set up stack and stacksidebar for organizing the screen
     stack_rc.set_hexpand(true);
@@ -49,8 +58,10 @@ fn build_ui(app: &Application) {
 
     // this is a very cursed line tbh. we are dereferencing the rc 
     // and the borrowing the stack
-    grid.attach(&(*stack_rc), 1, 0, 1, 1);
+    active_note_grid.attach(&(*stack_rc), 0, 1, 1, 1);
+    active_note_grid.attach(&note_title, 0, 0, 1, 1);
     grid.attach(&sidebar, 0, 0, 1, 1);
+    grid.attach(&active_note_grid, 1, 0, 1, 1);
     sidebar.set_stack(&(*stack_rc));
 
     // load exisiting notes from sql
