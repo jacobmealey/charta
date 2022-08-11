@@ -73,7 +73,7 @@ fn build_ui(app: &Application) {
     let stack_clone = stack_rc.clone();
     note_title.connect_changed(move |arg1| {
         let new_name = &arg1.text().to_string();
-        if(new_name.is_empty()){
+        if new_name.is_empty() {
             return;
         }
 

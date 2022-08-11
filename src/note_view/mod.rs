@@ -6,7 +6,6 @@ use gtk::prelude::*;
 use std::sync::Arc;
 use gtk::WrapMode;
 use gtk::subclass::prelude::ObjectSubclassIsExt;
-use sqlite;
 
 use std::sync::Mutex;
 

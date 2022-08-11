@@ -1,7 +1,5 @@
 use crate::note_view::NoteViewData;
 use std::sync::{Arc, Mutex};
-use gtk::prelude::TextViewExt;
-use gtk::prelude::TextBufferExt;
 use gtk::subclass::prelude::*;
 use gtk::{glib};
 
