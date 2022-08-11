@@ -17,14 +17,12 @@ impl ObjectSubclass for NoteViewObject {
     const NAME: &'static str = "NoteView";
     type Type = super::NoteViewObject;
     type ParentType = gtk::TextView;
-
 }
 
 impl ObjectImpl for NoteViewObject {
     fn constructed(&self, obj: &Self::Type) {
         self.parent_constructed(obj);
     }
-
 }
 
 impl TextViewImpl for NoteViewObject {}

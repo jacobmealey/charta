@@ -92,11 +92,13 @@ fn build_ui(app: &Application) {
     let stack_conn = connection.clone();
     stack_rc.connect_visible_child_notify(move |arg1| {
         let stackname = &arg1.visible_child_name().unwrap().to_string();
+        println!("stackname: {}", stackname);
 
         let vec: Vec<&str> = stackname.split("e").collect();
         let note_id = vec.get(1).unwrap();
 
         let querry = format!("SELECT name FROM notes WHERE note_id={}", note_id);
+        println!("{}", querry);
         let mut statement = stack_conn.prepare(querry).unwrap();
         if let State::Row = statement.next().unwrap() {
             note_title.set_text(&statement.read::<String>(0).unwrap());
@@ -141,6 +143,8 @@ fn build_ui(app: &Application) {
             rc.add_titled(&scroll, 
                           Some(&format!("note{}", &note_id.unwrap())[..]),
                           &name.unwrap()[..]);
+            let mut update_count = note_count.borrow_mut();
+            *update_count += 1;
 
             true
         }).unwrap();
@@ -153,7 +157,6 @@ fn build_ui(app: &Application) {
         let mut update_count = note_count.borrow_mut();
         let rc = stack_rc.clone();
 
-        *update_count += 1;
         println!("Creating new note {}", update_count);
         let name= format!("New Note {}", update_count);
         let filename = format!("new_note{}.txt", update_count);
@@ -164,11 +167,12 @@ fn build_ui(app: &Application) {
         noteview.setup();
         noteview.set_name(&name);
         noteview.set_file(&filename);
-        noteview.set_id(*update_count + 1);
+        noteview.set_id(*update_count);
 
+        *update_count += 1;
         // push new note into database
         let querry = format!("INSERT INTO notes VALUES ({}, \"{}\", \"{}\")", 
-                             noteview.get_id() + 1, 
+                             noteview.get_id(), 
                              noteview.get_name(), 
                              noteview.get_file());
         println!("{}", querry);
@@ -176,6 +180,7 @@ fn build_ui(app: &Application) {
 
         scroll.set_child(Some(&noteview));
         new_note_bindings(&noteview);
+        rc.add_titled(&scroll, Some(&format!("note{}", &noteview.get_id())), &name);
         noteview.buffer().connect_changed( move |arg1| {
             noteview.set_timer(0);
             noteview.set_buffstring(&arg1.slice(&arg1.start_iter(), 
@@ -183,7 +188,6 @@ fn build_ui(app: &Application) {
                                                 false).to_string());
             println!("Key pressed -- resetting timer");
         });
-        rc.add_titled(&scroll, Some(&name), &name);
     });
 
 
