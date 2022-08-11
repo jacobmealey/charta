@@ -15,7 +15,9 @@ use gtk::{Application,
           HeaderBar, 
           Button, 
           TextBuffer,
-          EditableLabel};
+          EditableLabel,
+          Separator
+    };
 use sqlite;
 use sqlite::State;
 use std::thread;
@@ -51,6 +53,7 @@ fn build_ui(app: &Application) {
     let sidebar: StackSidebar = StackSidebar::new();
     let new_note_button = Button::new();
     let note_title = EditableLabel::new("damn note");
+    let note_title_sep = Separator::new(gtk::Orientation::Horizontal);
 
     // set up stack and stacksidebar for organizing the screen
     stack_rc.set_hexpand(true);
@@ -58,7 +61,8 @@ fn build_ui(app: &Application) {
 
     // this is a very cursed line tbh. we are dereferencing the rc 
     // and the borrowing the stack
-    active_note_grid.attach(&(*stack_rc), 0, 1, 1, 1);
+    active_note_grid.attach(&(*stack_rc), 0, 2, 1, 1);
+    active_note_grid.attach(&note_title_sep, 0, 1, 1, 1);
     active_note_grid.attach(&note_title, 0, 0, 1, 1);
     grid.attach(&sidebar, 0, 0, 1, 1);
     grid.attach(&active_note_grid, 1, 0, 1, 1);
