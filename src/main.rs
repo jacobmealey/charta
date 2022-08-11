@@ -73,6 +73,8 @@ fn build_ui(app: &Application) {
     let stack_clone = stack_rc.clone();
     note_title.connect_changed(move |arg1| {
         let new_name = &arg1.text().to_string();
+        // if for any reason the name is empty, bail out because
+        // the querry will fail 
         if new_name.is_empty() {
             return;
         }
@@ -82,7 +84,6 @@ fn build_ui(app: &Application) {
         let note_id = vec.get(1).unwrap();
 
         let querry = format!("UPDATE notes SET name=\"{}\" WHERE note_id={}", new_name, note_id);
-        println!("querry: {}", querry);
 
         note_conn.execute(querry).unwrap();
         stack_clone.page(&stack_clone.visible_child().unwrap()).set_title(new_name);
@@ -190,9 +191,6 @@ fn build_ui(app: &Application) {
         });
     });
 
-
-
-
     // add button to header
     header.pack_start(&new_note_button);
 
@@ -232,7 +230,7 @@ fn new_note_bindings(noteview: &NoteViewObject) {
                 save(&(*vals), &conn);
             }
             drop(vals);
-            thread::sleep(time::Duration::from_millis(500));
+            thread::sleep(time::Duration::from_millis(100));
         }
     });
 }
