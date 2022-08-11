@@ -68,6 +68,42 @@ fn build_ui(app: &Application) {
     grid.attach(&active_note_grid, 1, 0, 1, 1);
     sidebar.set_stack(&(*stack_rc));
 
+    // update titles in DB when changing name
+    let note_conn = connection.clone();
+    let stack_clone = stack_rc.clone();
+    note_title.connect_changed(move |arg1| {
+        let new_name = &arg1.text().to_string();
+        if(new_name.is_empty()){
+            return;
+        }
+
+        let stackname = stack_clone.visible_child_name().unwrap().to_string();
+        let vec: Vec<&str> = stackname.split("e").collect();
+        let note_id = vec.get(1).unwrap();
+
+        let querry = format!("UPDATE notes SET name=\"{}\" WHERE note_id={}", new_name, note_id);
+        println!("querry: {}", querry);
+
+        note_conn.execute(querry).unwrap();
+        stack_clone.page(&stack_clone.visible_child().unwrap()).set_title(new_name);
+    });
+
+    // Update note_title to represent what we have clicked on :)
+    let stack_conn = connection.clone();
+    stack_rc.connect_visible_child_notify(move |arg1| {
+        let stackname = &arg1.visible_child_name().unwrap().to_string();
+
+        let vec: Vec<&str> = stackname.split("e").collect();
+        let note_id = vec.get(1).unwrap();
+
+        let querry = format!("SELECT name FROM notes WHERE note_id={}", note_id);
+        let mut statement = stack_conn.prepare(querry).unwrap();
+        if let State::Row = statement.next().unwrap() {
+            note_title.set_text(&statement.read::<String>(0).unwrap());
+        }
+    });
+
+
     // load exisiting notes from sql
     connection
         .iterate("SELECT * FROM notes", |pairs| {
@@ -132,7 +168,7 @@ fn build_ui(app: &Application) {
 
         // push new note into database
         let querry = format!("INSERT INTO notes VALUES ({}, \"{}\", \"{}\")", 
-                             noteview.get_id(), 
+                             noteview.get_id() + 1, 
                              noteview.get_name(), 
                              noteview.get_file());
         println!("{}", querry);
