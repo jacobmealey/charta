@@ -16,7 +16,12 @@ use gtk::{Application,
           Button, 
           TextBuffer,
           EditableLabel,
-          Separator
+          Separator,
+          ShortcutController,
+          ShortcutTrigger,
+          ShortcutAction,
+          Shortcut
+
     };
 use sqlite;
 use sqlite::State;
@@ -43,7 +48,7 @@ fn build_ui(app: &Application) {
         .application(app)
         .build();
 
-    let connection = Arc::new(sqlite::open("notes_db.sql").unwrap());
+    let connection = Arc::new(sqlite::open("/usr/share/goats/notes_db.sql").unwrap());
 
     let header = HeaderBar::new();
     let grid: Grid = Grid::new();
@@ -124,7 +129,7 @@ fn build_ui(app: &Application) {
             noteview.set_name(&name.unwrap().to_string());
             noteview.set_file(&filename.unwrap().to_string());
             noteview.set_id(note_id.unwrap().parse::<u32>().unwrap()); 
-            let read_in = fs::read_to_string(noteview.get_file()).expect("Unable to read file");
+            let read_in = fs::read_to_string("/usr/share/goats/".to_owned() + &noteview.get_file()).expect("Unable to read file");
 
 
             noteview.set_buffer(Some(&TextBuffer::builder()
@@ -151,9 +156,7 @@ fn build_ui(app: &Application) {
         }).unwrap();
 
 
-    // create a new note when user clicks the new_note_button
-    new_note_button.set_label("New");
-    new_note_button.connect_clicked(move |_| {
+    let new_note = move || {
         // get references to existing state
         let mut update_count = note_count.borrow_mut();
         let rc = stack_rc.clone();
@@ -189,13 +192,29 @@ fn build_ui(app: &Application) {
                                                 false).to_string());
             println!("Key pressed -- resetting timer");
         });
-    });
+    };
+
+    // create a new note when user clicks the new_note_button
+    new_note_button.set_label("New");
+    new_note_button.connect_clicked(move |_| {new_note()});
+
+
 
     // add button to header
     header.pack_start(&new_note_button);
 
+    // Shortcuts :)
+    // new note short cut
+    //let new_note_keybind = ShortcutTrigger::parse_string("<Control>n");
+    //let new_note_action  = ShortcutAction::parse_string("activate");
+    //let new_note_shortcut = Shortcut::new(Some(&new_note_keybind), Some(&new_note_action));
+
+    //let shortcut_controller = ShortcutController::new();
+    //shortcut_controller.add_shortcut(&new_note_shortcut);
+
     // Set parameters for window settings
     window.set_titlebar(Some(&header));
+    //window.add_controller(&shortcut_controller);
     window.set_default_width(650);
     window.set_default_height(420);
     window.set_title(Some("Notes"));
@@ -212,7 +231,7 @@ fn save(notes: &NoteViewData, conn: &sqlite::Connection) {
         .unwrap();
 
     while let State::Row  = statement.next().unwrap() {
-        let filename = statement.read::<String>(0).unwrap();
+        let filename = "/usr/share/goats/".to_owned() + &statement.read::<String>(0).unwrap();
         println!("saving to: {}", filename);
         fs::write(filename, &notes.buffer).expect("Unable to write file");
     }
@@ -225,7 +244,7 @@ fn new_note_bindings(noteview: &NoteViewObject) {
         loop {
             let mut vals = vals_clone_t.lock().unwrap();
             (*vals).timer += 1;
-            let conn = sqlite::open("notes_db.sql").unwrap();
+            let conn = sqlite::open("/usr/share/goats/notes_db.sql").unwrap();
             if (*vals).timer == 5 {
                 save(&(*vals), &conn);
             }
