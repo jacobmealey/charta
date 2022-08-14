@@ -22,3 +22,5 @@ cp assets/xyz.jacobmealey.Notes.desktop /usr/share/applications/xyz.jacobmealey.
 # cp for eventual icon
 cp target/debug/notes $INSTALL_DIR/notes
 
+chmod -R o+w $ASSETS_DIR
+
