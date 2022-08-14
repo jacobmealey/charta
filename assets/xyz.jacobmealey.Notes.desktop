@@ -2,7 +2,7 @@
 Name=Goats
 Comment=Goats is Notes
 Exec=/usr/bin/notes
-Icon=cura-icon
+#Icon=cura-icon
 Terminal=false
 Categories=Utility;
 Type=Application
