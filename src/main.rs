@@ -17,16 +17,13 @@ use gtk::{Application,
           TextBuffer,
           EditableLabel,
           Separator,
-          ShortcutController,
-          ShortcutTrigger,
-          ShortcutAction,
-          Shortcut
-
     };
 use sqlite;
 use sqlite::State;
 use std::thread;
 use std::time;
+use gtk::glib;
+use gtk::gio::SimpleAction;
 
 use crate::note_view::NoteViewData;
 
@@ -40,6 +37,7 @@ fn main() {
         .build();
 
     app.connect_activate(build_ui);
+    app.set_accels_for_action("win.quit", &["<Ctrl>Q"]);
     app.run();
 }
 
@@ -59,6 +57,13 @@ fn build_ui(app: &Application) {
     let new_note_button = Button::new();
     let note_title = EditableLabel::new("damn note");
     let note_title_sep = Separator::new(gtk::Orientation::Horizontal);
+
+    let action_close = SimpleAction::new("quit", None);
+    action_close.connect_activate(glib::clone!(@weak window => move |_, _| {
+        println!("Action triggered");
+        window.close();
+    }));
+    window.add_action(&action_close);
 
     // set up stack and stacksidebar for organizing the screen
     stack_rc.set_hexpand(true);
