@@ -87,6 +87,18 @@ fn build_ui(app: &Application) {
         let top_child = stack_bold.visible_child().unwrap().downcast::<ScrolledWindow>().unwrap().child().unwrap();
         let current_note = top_child.downcast::<NoteViewObject>().unwrap();
         let (bound_start, bound_end) = current_note.buffer().selection_bounds().unwrap();
+        let mut is_italics: bool = false;
+        for tag in bound_start.tags() {
+            if tag.name().unwrap() == "bold" {
+                is_italics = true;
+                break
+            }
+        }
+        current_note.buffer().remove_all_tags(&bound_start, &bound_end);
+        if is_italics {
+            return;
+        }
+        current_note.buffer().remove_all_tags(&bound_start, &bound_end);
         current_note.buffer().apply_tag_by_name("bold", &bound_start, &bound_end);
         println!("Bold Action triggered");
     });
@@ -97,6 +109,17 @@ fn build_ui(app: &Application) {
         let top_child = stack_bold.visible_child().unwrap().downcast::<ScrolledWindow>().unwrap().child().unwrap();
         let current_note = top_child.downcast::<NoteViewObject>().unwrap();
         let (bound_start, bound_end) = current_note.buffer().selection_bounds().unwrap();
+        let mut is_italics: bool = false;
+        for tag in bound_start.tags() {
+            if tag.name().unwrap() == "italics" {
+                is_italics = true;
+                break
+            }
+        }
+        current_note.buffer().remove_all_tags(&bound_start, &bound_end);
+        if is_italics {
+            return;
+        }
         current_note.buffer().apply_tag_by_name("italics", &bound_start, &bound_end);
         //println!("{} {}", bound_start, bound_end);
         println!("Italic Action triggered");
