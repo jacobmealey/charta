@@ -1,18 +1,20 @@
 pub mod imp;
 
 use glib::Object;
-use gtk::glib;
 use gtk::prelude::*;
 use std::sync::Arc;
 use gtk::WrapMode;
 use gtk::subclass::prelude::ObjectSubclassIsExt;
+use gtk::gio::SimpleAction;
+use gtk::gio::SimpleActionGroup;
+use gtk::glib;
 
 use std::sync::Mutex;
 
 glib::wrapper! {
     pub struct NoteViewObject(ObjectSubclass<imp::NoteViewObject>)
-    @extends gtk::TextView, gtk::Widget,
-    @implements gtk::Accessible, gtk::Buildable, 
+    @extends gtk::TextView, gtk::Widget, gtk::gio::SimpleActionGroup,
+    @implements gtk::Accessible, gtk::Buildable,  
     gtk::ConstraintTarget, gtk::Orientable;
 }
 
@@ -28,6 +30,8 @@ impl NoteViewObject {
         self.set_right_margin(35);
         self.set_top_margin(24);
         self.set_bottom_margin(24);
+
+        //self.add_action(&action_bold);
     }
 
     pub fn set_name(&self, name: &String) {

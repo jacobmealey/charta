@@ -24,6 +24,7 @@ use std::thread;
 use std::time;
 use gtk::glib;
 use gtk::gio::SimpleAction;
+use gtk::gio::SimpleActionGroup;
 
 use crate::note_view::NoteViewData;
 
@@ -38,6 +39,7 @@ fn main() {
 
     app.connect_activate(build_ui);
     app.set_accels_for_action("win.quit", &["<Ctrl>Q"]);
+    app.set_accels_for_action("note.bold", &["<Ctrl>B"]);
     app.run();
 }
 
@@ -78,6 +80,25 @@ fn build_ui(app: &Application) {
     grid.attach(&active_note_grid, 1, 0, 1, 1);
     sidebar.set_stack(&(*stack_rc));
 
+    let action_bold = SimpleAction::new("bold", None);
+    let stack_bold = stack_rc.clone();
+    action_bold.connect_activate(move |_, _| {
+        let top_child = stack_bold.visible_child().unwrap().downcast::<ScrolledWindow>().unwrap().child().unwrap();
+        let current_note = top_child.downcast::<NoteViewObject>().unwrap();
+        let (bound_start, bound_end) = current_note.buffer().selection_bounds().unwrap();
+        let bold_tag = gtk::TextTag::new(Some("bold"));
+        bold_tag.set_weight(600);
+        current_note.buffer().tag_table().add(&bold_tag);
+        current_note.buffer().apply_tag(&bold_tag, &bound_start, &bound_end);
+        //println!("{} {}", bound_start, bound_end);
+        println!("Bold Action triggered");
+    });
+    let actions = SimpleActionGroup::new();
+    actions.add_action(&action_bold);
+    window.insert_action_group("note", Some(&actions));
+    for act in actions.list_actions() {
+        println!("{}", act);
+    }
     // update titles in DB when changing name
     let note_conn = connection.clone();
     let stack_clone = stack_rc.clone();
