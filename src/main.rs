@@ -40,6 +40,7 @@ fn main() {
     app.connect_activate(build_ui);
     app.set_accels_for_action("win.quit", &["<Ctrl>Q"]);
     app.set_accels_for_action("note.bold", &["<Ctrl>B"]);
+    app.set_accels_for_action("note.italics", &["<Ctrl>I"]);
     app.run();
 }
 
@@ -86,15 +87,24 @@ fn build_ui(app: &Application) {
         let top_child = stack_bold.visible_child().unwrap().downcast::<ScrolledWindow>().unwrap().child().unwrap();
         let current_note = top_child.downcast::<NoteViewObject>().unwrap();
         let (bound_start, bound_end) = current_note.buffer().selection_bounds().unwrap();
-        let bold_tag = gtk::TextTag::new(Some("bold"));
-        bold_tag.set_weight(600);
-        current_note.buffer().tag_table().add(&bold_tag);
-        current_note.buffer().apply_tag(&bold_tag, &bound_start, &bound_end);
-        //println!("{} {}", bound_start, bound_end);
+        current_note.buffer().apply_tag_by_name("bold", &bound_start, &bound_end);
         println!("Bold Action triggered");
     });
+
+    let action_italics = SimpleAction::new("italics", None);
+    let stack_bold = stack_rc.clone();
+    action_italics.connect_activate(move |_, _| {
+        let top_child = stack_bold.visible_child().unwrap().downcast::<ScrolledWindow>().unwrap().child().unwrap();
+        let current_note = top_child.downcast::<NoteViewObject>().unwrap();
+        let (bound_start, bound_end) = current_note.buffer().selection_bounds().unwrap();
+        current_note.buffer().apply_tag_by_name("italics", &bound_start, &bound_end);
+        //println!("{} {}", bound_start, bound_end);
+        println!("Italic Action triggered");
+    });
+
     let actions = SimpleActionGroup::new();
     actions.add_action(&action_bold);
+    actions.add_action(&action_italics);
     window.insert_action_group("note", Some(&actions));
     for act in actions.list_actions() {
         println!("{}", act);
@@ -151,7 +161,6 @@ fn build_ui(app: &Application) {
             let scroll: ScrolledWindow = ScrolledWindow::new();
             let noteview: NoteViewObject = NoteViewObject::new();
 
-            noteview.setup();
             noteview.set_name(&name.unwrap().to_string());
             noteview.set_file(&filename.unwrap().to_string());
             noteview.set_id(note_id.unwrap().parse::<u32>().unwrap()); 
@@ -161,6 +170,9 @@ fn build_ui(app: &Application) {
             noteview.set_buffer(Some(&TextBuffer::builder()
                                      .text(&read_in)
                                      .build()));
+
+            // we call setup /after/ getting everything in place
+            noteview.setup();
 
             new_note_bindings(&noteview);
             scroll.set_child(Some(&noteview));
