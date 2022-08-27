@@ -81,55 +81,39 @@ fn build_ui(app: &Application) {
     grid.attach(&active_note_grid, 1, 0, 1, 1);
     sidebar.set_stack(&(*stack_rc));
 
-    let action_bold = SimpleAction::new("bold", None);
-    let stack_bold = stack_rc.clone();
-    action_bold.connect_activate(move |_, _| {
-        let top_child = stack_bold.visible_child().unwrap().downcast::<ScrolledWindow>().unwrap().child().unwrap();
-        let current_note = top_child.downcast::<NoteViewObject>().unwrap();
-        let (bound_start, bound_end) = current_note.buffer().selection_bounds().unwrap();
-        let mut is_italics: bool = false;
-        for tag in bound_start.tags() {
-            if tag.name().unwrap() == "bold" {
-                is_italics = true;
-                break
-            }
-        }
-        current_note.buffer().remove_all_tags(&bound_start, &bound_end);
-        if is_italics {
-            return;
-        }
-        current_note.buffer().remove_all_tags(&bound_start, &bound_end);
-        current_note.buffer().apply_tag_by_name("bold", &bound_start, &bound_end);
-        println!("Bold Action triggered");
-    });
+    // ideally actions should be a global list somewhere (like in an XML file? fuck that.) 
+    // so for now just try to keep the ducks in a row :). This code seems self explanatory
+    // now. I will comment it tomorrow (?) -- Aug 26 2022 will I come back???
+    let actions = vec!["bold", "italics"];
+    let action_group = SimpleActionGroup::new();
 
-    let action_italics = SimpleAction::new("italics", None);
-    let stack_bold = stack_rc.clone();
-    action_italics.connect_activate(move |_, _| {
-        let top_child = stack_bold.visible_child().unwrap().downcast::<ScrolledWindow>().unwrap().child().unwrap();
-        let current_note = top_child.downcast::<NoteViewObject>().unwrap();
-        let (bound_start, bound_end) = current_note.buffer().selection_bounds().unwrap();
-        let mut is_italics: bool = false;
-        for tag in bound_start.tags() {
-            if tag.name().unwrap() == "italics" {
-                is_italics = true;
-                break
+    for action in actions {
+        let stack_actions = stack_rc.clone();
+        let act = SimpleAction::new(action, None);
+        act.connect_activate(move |_, _| {
+            let top_child = stack_actions.visible_child().unwrap().downcast::<ScrolledWindow>().unwrap().child().unwrap();
+            let current_note = top_child.downcast::<NoteViewObject>().unwrap();
+            let (bound_start, bound_end) = current_note.buffer().selection_bounds().unwrap();
+            let mut is_action: bool = false;
+            for tag in bound_start.tags() {
+                if tag.name().unwrap() == action {
+                    is_action = true;
+                    break
+                }
             }
-        }
-        current_note.buffer().remove_all_tags(&bound_start, &bound_end);
-        if is_italics {
-            return;
-        }
-        current_note.buffer().apply_tag_by_name("italics", &bound_start, &bound_end);
-        //println!("{} {}", bound_start, bound_end);
-        println!("Italic Action triggered");
-    });
+            current_note.buffer().remove_all_tags(&bound_start, &bound_end);
+            if is_action {
+                return;
+            }
+            current_note.buffer().remove_all_tags(&bound_start, &bound_end);
+            current_note.buffer().apply_tag_by_name(action, &bound_start, &bound_end);
+            println!("{} Action triggered", action);
+        });
+        action_group.add_action(&act);
+    }
 
-    let actions = SimpleActionGroup::new();
-    actions.add_action(&action_bold);
-    actions.add_action(&action_italics);
-    window.insert_action_group("note", Some(&actions));
-    for act in actions.list_actions() {
+    window.insert_action_group("note", Some(&action_group));
+    for act in action_group.list_actions() {
         println!("{}", act);
     }
     // update titles in DB when changing name
