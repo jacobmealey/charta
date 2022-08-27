@@ -7,3 +7,8 @@ Native and simple notes for Gnome and GTK.
 
 ### Building 
 It's written in Rust with Cargo so install those. In the source directory simply run `cargo build` to build it and `cargo run` to run it. I would like to get it in the AUR soon.
+
+#### Installing:
+```
+sudo ./install.sh
+```
