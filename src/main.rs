@@ -177,6 +177,7 @@ fn build_ui(app: &Application) {
             noteview.set_buffer(Some(&TextBuffer::builder()
                                      .text(&read_in)
                                      .build()));
+            noteview.set_buffstring(&read_in);
 
             // we call setup /after/ getting everything in place
             noteview.setup();
@@ -276,6 +277,7 @@ fn save(notes: &NoteViewData, conn: &sqlite::Connection) {
         .unwrap();
 
     while let State::Row  = statement.next().unwrap() {
+        println!("buffer: {}", &notes.buffer);
         let filename = "/usr/share/goats/".to_owned() + &statement.read::<String>(0).unwrap();
         println!("saving to: {}", filename);
         fs::write(filename, &notes.buffer).expect("Unable to write file");
