@@ -108,8 +108,9 @@ fn build_ui(app: &Application) {
             }
             current_note.buffer().remove_all_tags(&bound_start, &bound_end);
             current_note.buffer().apply_tag_by_name(action, &bound_start, &bound_end);
-
             current_note.serialize();
+            current_note.get_vals().lock().unwrap().timer = 0;
+
             
             println!("{} Action triggered", action);
         });
@@ -193,6 +194,7 @@ fn build_ui(app: &Application) {
                 noteview.set_buffstring(&arg1.slice(&arg1.start_iter(), 
                                                     &arg1.end_iter(), 
                                                     false).to_string());
+                noteview.serialize();
                 println!("Key pressed -- resetting timer");
             });
 
@@ -240,6 +242,7 @@ fn build_ui(app: &Application) {
             noteview.set_buffstring(&arg1.slice(&arg1.start_iter(), 
                                                 &arg1.end_iter(), 
                                                 false).to_string());
+            noteview.serialize();
             println!("Key pressed -- resetting timer");
         });
     };
@@ -284,7 +287,7 @@ fn save(notes: &NoteViewData, conn: &sqlite::Connection) {
         println!("buffer: {}", &notes.buffer);
         let filename = "/usr/share/goats/".to_owned() + &statement.read::<String>(0).unwrap();
         println!("saving to: {}", filename);
-        fs::write(filename, &notes.buffer).expect("Unable to write file");
+        fs::write(filename, &notes.serialized).expect("Unable to write file");
     }
 }
 

@@ -37,22 +37,30 @@ impl NoteViewObject {
     // ideally we can also use this for formatting bulleted and numbered
     // lists. 
     pub fn serialize(&self) {
+        println!("serializes");
         let (start, end) = self.buffer().bounds();
         let mut iter = start;
         let mut open_tag = gtk::TextTag::new(Some("filler"));
 
-        let prev = gtk::TextITer::new();
+        let mut ret = String::from("");
         while iter != end {
+            let mut next = iter;
+            next.forward_char();
             for tag in iter.toggled_tags(true) {
-                println!("<{}>", tag.name().unwrap());
+                ret.push_str(&format!("<{}>", tag.name().unwrap()));
                 open_tag = tag;
             }
 
             if iter.ends_tag(Some(&open_tag)) {
-                println!("</{}>", open_tag.name().unwrap());
+                ret.push_str(&format!("</{}>", open_tag.name().unwrap()));
             }
-            print!("{}", iter.visible_text(iter.forward_char()));
+            ret.push_str(&next.visible_text(&iter).to_string());
+
+            iter.forward_char();
         }
+        println!("Ret: {}", ret);
+        let vals = Arc::clone(&self.imp().vals);
+        vals.lock().unwrap().serialized = ret;
 
     }
 
@@ -127,6 +135,7 @@ pub struct NoteViewData {
     pub name: String,
     pub timer: u32,
     pub buffer: String,
+    pub serialized: String,
     pub filename: String,
     pub note_id: u32,
 }
