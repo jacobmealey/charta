@@ -40,6 +40,8 @@ impl NoteViewObject {
         let (start, end) = self.buffer().bounds();
         let mut iter = start;
         let mut open_tag = gtk::TextTag::new(Some("filler"));
+
+        let prev = gtk::TextITer::new();
         while iter != end {
             for tag in iter.toggled_tags(true) {
                 println!("<{}>", tag.name().unwrap());
@@ -49,7 +51,7 @@ impl NoteViewObject {
             if iter.ends_tag(Some(&open_tag)) {
                 println!("</{}>", open_tag.name().unwrap());
             }
-            iter.forward_char();
+            print!("{}", iter.visible_text(iter.forward_char()));
         }
 
     }
