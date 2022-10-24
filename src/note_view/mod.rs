@@ -42,12 +42,12 @@ impl NoteViewObject {
         let mut open_tag = gtk::TextTag::new(Some("filler"));
         while iter != end {
             for tag in iter.toggled_tags(true) {
-                println!("<tag>");
+                println!("<{}>", tag.name().unwrap());
                 open_tag = tag;
             }
 
             if iter.ends_tag(Some(&open_tag)) {
-                println!("</tag>");
+                println!("</{}>", open_tag.name().unwrap());
             }
             iter.forward_char();
         }
