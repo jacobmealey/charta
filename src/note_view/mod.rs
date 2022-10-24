@@ -23,6 +23,37 @@ impl NoteViewObject {
         Object::new(&[]).expect("Failed to create `NoteView`.")
     }
 
+    // this function is going to be paired w/ a deserialize function
+    // The goal is to insert tags from the tag table inline in a mark
+    // up style format - so for bold text it will be:
+    //      <bold> some text </bold>
+    //  and Italics will be :
+    //      <italic> some text </italic> 
+    //
+    // Right now this is just scaffoling - but I think it could use an 
+    // "accumulator" string which characters are pushed to and if that 
+    // iterator is also a tag start or end push <bold> or <italic>
+    // 
+    // ideally we can also use this for formatting bulleted and numbered
+    // lists. 
+    pub fn serialize(&self) {
+        let (start, end) = self.buffer().bounds();
+        let mut iter = start;
+        let mut open_tag = gtk::TextTag::new(Some("filler"));
+        while iter != end {
+            for tag in iter.toggled_tags(true) {
+                println!("<tag>");
+                open_tag = tag;
+            }
+
+            if iter.ends_tag(Some(&open_tag)) {
+                println!("</tag>");
+            }
+            iter.forward_char();
+        }
+
+    }
+
     pub fn setup(&self) {
         self.set_editable(true);
         self.set_wrap_mode(WrapMode::Word);

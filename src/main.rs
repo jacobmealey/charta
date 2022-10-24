@@ -25,6 +25,7 @@ use std::time;
 use gtk::glib;
 use gtk::gio::SimpleAction;
 use gtk::gio::SimpleActionGroup;
+use gtk::glib::GString;
 
 use crate::note_view::NoteViewData;
 
@@ -107,6 +108,9 @@ fn build_ui(app: &Application) {
             }
             current_note.buffer().remove_all_tags(&bound_start, &bound_end);
             current_note.buffer().apply_tag_by_name(action, &bound_start, &bound_end);
+
+            current_note.serialize();
+            
             println!("{} Action triggered", action);
         });
         action_group.add_action(&act);
