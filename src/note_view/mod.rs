@@ -105,6 +105,7 @@ impl NoteViewObject {
     pub fn set_buffstring(&self, buffstring: &String) {
         let vals = Arc::clone(&self.imp().vals);
         vals.lock().unwrap().buffer = buffstring.to_string();
+        self.serialize()
     }  
 
     pub fn get_file(&self) -> String {

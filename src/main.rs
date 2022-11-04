@@ -177,6 +177,7 @@ fn build_ui(app: &Application) {
             noteview.set_file(&filename.unwrap().to_string());
             noteview.set_id(note_id.unwrap().parse::<u32>().unwrap()); 
             let read_in = fs::read_to_string("/usr/share/goats/".to_owned() + &noteview.get_file()).expect("Unable to read file");
+            println!("{}", read_in);
 
 
             noteview.set_buffer(Some(&TextBuffer::builder()
