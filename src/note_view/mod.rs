@@ -5,8 +5,6 @@ use gtk::prelude::*;
 use std::sync::Arc;
 use gtk::WrapMode;
 use gtk::subclass::prelude::ObjectSubclassIsExt;
-use gtk::gio::SimpleAction;
-use gtk::gio::SimpleActionGroup;
 use gtk::glib;
 
 use std::sync::Mutex;
