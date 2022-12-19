@@ -30,8 +30,8 @@ fn main() {
 
     app.connect_activate(build_ui);
     app.set_accels_for_action("win.quit", &["<Ctrl>Q"]);
-    app.set_accels_for_action("note.bold", &["<Ctrl>B"]);
-    app.set_accels_for_action("note.italics", &["<Ctrl>I"]);
+    app.set_accels_for_action("note.b", &["<Ctrl>B"]);
+    app.set_accels_for_action("note.i", &["<Ctrl>I"]);
     app.run();
 }
 
@@ -92,14 +92,17 @@ fn build_ui(app: &Application) {
     // ideally actions should be a global list somewhere (like in an XML file? fuck that.) 
     // so for now just try to keep the ducks in a row :). This code seems self explanatory
     // now. I will comment it tomorrow (?) -- Aug 26 2022 will I come back???
-    let actions = vec!["bold", "italics"];
+    let actions = vec!["b", "i"];
     let action_group = SimpleActionGroup::new();
 
     for action in actions {
         let stack_actions = stack_rc.clone();
         let act = SimpleAction::new(action, None);
         act.connect_activate(move |_, _| {
-            let top_child = stack_actions.visible_child().unwrap().downcast::<ScrolledWindow>().unwrap().child().unwrap();
+            let top_child = stack_actions
+                .visible_child().unwrap()
+                .downcast::<ScrolledWindow>().unwrap()
+                .child().unwrap();
             let current_note = top_child.downcast::<NoteViewObject>().unwrap();
             let (bound_start, bound_end) = current_note.buffer().selection_bounds().unwrap();
             let mut is_action: bool = false;
@@ -128,7 +131,7 @@ fn build_ui(app: &Application) {
     for act in action_group.list_actions() {
         println!("{}", act);
     }
-        
+
     let new_note = move || {
         // get references to existing state
         let mut update_count = note_count.borrow_mut();
