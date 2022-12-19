@@ -1,4 +1,1 @@
-{
-    "name": "New Note 1",
-    "contents": "this is a <b>NOTE</b>!!!"
-}
+{"name":"New Note 1","contents":"hello <span weight=\"700\">the man</span> is in <span style=\"2\">mr</span>orr"}

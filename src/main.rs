@@ -133,7 +133,7 @@ fn build_ui(app: &Application) {
         println!("{}", act);
     }
 
-    let new_note = move |value: Option<(&str, json::JsonValue)>| {
+    let new_note = move |value: Option<(&str, json::JsonValue)>| -> NoteViewObject {
         // get references to existing state
         let mut update_count = note_count.borrow_mut();
         let rc = stack_rc.clone();
@@ -159,10 +159,13 @@ fn build_ui(app: &Application) {
 
         scroll.set_child(Some(&noteview));
         rc.add_titled(&scroll, Some(&format!("note{}", &noteview.get_id())), &name.to_string());
+        noteview 
     };
 
-    // create a new note when user clicks the new_note_button
+    let notes: Rc<RefCell<Vec<NoteViewObject>>> = Rc::new(RefCell::new(Vec::new()));
 
+    let notes_2 = Rc::clone(&notes);
+    // load entries from the directory we are reading from
     for entry in fs::read_dir("/home/jacob/Documents/personal/Notes/json").unwrap() {
         let file = entry.unwrap();
         let filename = file.path().into_os_string().into_string().unwrap();
@@ -170,13 +173,31 @@ fn build_ui(app: &Application) {
 
         let note = json::parse(&fs::read_to_string(&filename).unwrap()).unwrap();
         println!("Name: {}, contents: {}", note["name"], note["contents"]);
-        new_note(Some((&filename, note)));
-
+        let mut notes = notes_2.borrow_mut();
+        &notes.push(new_note(Some((&filename, note))));
     }
 
+    let notes_3 = Rc::clone(&notes);
+    // create a new note when user clicks the new_note_button
     new_note_button.set_label("New");
-    new_note_button.connect_clicked(move |_| {new_note(None)});
+    new_note_button.connect_clicked(move |_| {
+        let mut notes = notes_3.borrow_mut();
+        &notes.push(new_note(None));
+    });
 
+
+    // save files on closing -- not sure how we can make this happen for every type of 
+    // closing so I am not just going to do it for the close button press. 
+    let notes_4 = Rc::clone(&notes);
+    window.connect_close_request(move |_| {
+        println!("Closing..."); 
+        let notes = notes_4.borrow_mut();
+        for note in &*notes {
+            note.save()
+        }
+
+        gtk::Inhibit(false)
+    });
 
     // add button to header
     header.pack_start(&new_note_button);
