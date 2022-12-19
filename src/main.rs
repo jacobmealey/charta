@@ -81,13 +81,27 @@ fn build_ui(app: &Application) {
 		if new_name.is_empty() {
 			return;
 		}
-
+        // update name in stackviewobject
+        let top_child = stack_clone
+                .visible_child().unwrap()
+                .downcast::<ScrolledWindow>().unwrap()
+                .child().unwrap();
+        let current_note = top_child.downcast::<NoteViewObject>().unwrap();
+        current_note.set_name(new_name);
+        // update name in stack sidebar
 		stack_clone.page(&stack_clone.visible_child().unwrap()).set_title(new_name);
 	});
 
 	// Update note_title to represent what we have clicked on :)
 	stack_rc.connect_visible_child_notify(move |arg1| {
 		let stackname = &arg1.visible_child_name().unwrap().to_string();
+        let top_child = arg1 
+                .visible_child().unwrap()
+                .downcast::<ScrolledWindow>().unwrap()
+                .child().unwrap();
+        let current_note = top_child.downcast::<NoteViewObject>().unwrap();
+        println!("Current Note: {}", current_note.get_name());
+        note_title.set_text(&current_note.get_name());
 		println!("stackname: {}", stackname);
 	});
 
