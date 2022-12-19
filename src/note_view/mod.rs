@@ -82,11 +82,16 @@ impl NoteViewObject {
         self.serialize();
         let binding = Arc::clone(&self.imp().vals);
         let vals = binding.lock().unwrap();
-        fs::write(&vals.filename, json::stringify(
+        let write_val = fs::write(&vals.filename, json::stringify(
                 json::object!{name: &*vals.name, 
                               contents: &*vals.serialized
                 }
         ));
+
+        match write_val {
+            Ok(_) => {},
+            Err(e) => {println!("Error writing file: {e:?}");}
+        }
     }
 
     pub fn setup(&self) {

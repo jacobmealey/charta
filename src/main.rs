@@ -140,7 +140,7 @@ fn build_ui(app: &Application) {
 
         println!("Creating new note {}", update_count);
         let name_raw = format!("New Note {}", update_count);
-        let filename_raw = format!("new_note{}.txt", update_count);
+        let filename_raw = format!("/home/jacob/Documents/personal/Notes/json/new_note{}.txt", update_count);
 
         let (filename, contents) = value.unwrap_or((&filename_raw, 
                                     json::object!(name: name_raw, contents: "")));
@@ -174,7 +174,7 @@ fn build_ui(app: &Application) {
         let note = json::parse(&fs::read_to_string(&filename).unwrap()).unwrap();
         println!("Name: {}, contents: {}", note["name"], note["contents"]);
         let mut notes = notes_2.borrow_mut();
-        &notes.push(new_note(Some((&filename, note))));
+        notes.push(new_note(Some((&filename, note))));
     }
 
     let notes_3 = Rc::clone(&notes);
@@ -182,7 +182,7 @@ fn build_ui(app: &Application) {
     new_note_button.set_label("New");
     new_note_button.connect_clicked(move |_| {
         let mut notes = notes_3.borrow_mut();
-        &notes.push(new_note(None));
+        notes.push(new_note(None));
     });
 
 
