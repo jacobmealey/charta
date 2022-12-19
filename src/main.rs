@@ -40,8 +40,8 @@ fn main() {
 
     app.connect_activate(build_ui);
     app.set_accels_for_action("win.quit", &["<Ctrl>Q"]);
-    app.set_accels_for_action("note.bold", &["<Ctrl>B"]);
-    app.set_accels_for_action("note.italics", &["<Ctrl>I"]);
+    app.set_accels_for_action("note.b", &["<Ctrl>B"]);
+    app.set_accels_for_action("note.i", &["<Ctrl>I"]);
     app.run();
 }
 
@@ -85,7 +85,7 @@ fn build_ui(app: &Application) {
     // ideally actions should be a global list somewhere (like in an XML file? fuck that.) 
     // so for now just try to keep the ducks in a row :). This code seems self explanatory
     // now. I will comment it tomorrow (?) -- Aug 26 2022 will I come back???
-    let actions = vec!["bold", "italics"];
+    let actions = vec!["b", "i"];
     let action_group = SimpleActionGroup::new();
 
     for action in actions {
@@ -183,7 +183,8 @@ fn build_ui(app: &Application) {
             noteview.set_buffer(Some(&TextBuffer::builder()
                                      .text(&read_in)
                                      .build()));
-            noteview.set_buffstring(&read_in);
+            let mut begin = noteview.buffer().start_iter();
+            noteview.buffer().insert_markup(&mut begin, &read_in);
 
             // we call setup /after/ getting everything in place
             noteview.setup();

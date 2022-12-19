@@ -72,11 +72,11 @@ impl NoteViewObject {
         self.set_top_margin(24);
         self.set_bottom_margin(24);
 
-        let bold_tag = gtk::TextTag::new(Some("bold"));
+        let bold_tag = gtk::TextTag::new(Some("b"));
         bold_tag.set_weight(600);
         self.buffer().tag_table().add(&bold_tag);
 
-        let italic_tag = gtk::TextTag::new(Some("italics"));
+        let italic_tag = gtk::TextTag::new(Some("i"));
         italic_tag.set_font(Some("Sans italic 12"));
         self.buffer().tag_table().add(&italic_tag);
 
