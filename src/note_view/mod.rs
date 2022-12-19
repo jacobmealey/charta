@@ -7,6 +7,8 @@ use gtk::WrapMode;
 use gtk::subclass::prelude::ObjectSubclassIsExt;
 use gtk::glib;
 
+use json;
+
 use std::sync::Mutex;
 
 glib::wrapper! {

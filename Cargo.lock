@@ -374,6 +374,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
 
 [[package]]
+name = "json"
+version = "0.12.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "078e285eafdfb6c4b434e0d31e8cfcb5115b651496faca5749b88fafd4f23bfd"
+
+[[package]]
 name = "libc"
 version = "0.2.129"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -399,6 +405,7 @@ name = "notes"
 version = "0.1.0"
 dependencies = [
  "gtk4",
+ "json",
 ]
 
 [[package]]

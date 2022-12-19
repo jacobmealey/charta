@@ -1,5 +1,6 @@
 mod note_view;
 
+use std::fs;
 use note_view::NoteViewObject;
 use gtk::prelude::*;
 use std::rc::Rc;
@@ -19,6 +20,7 @@ use gtk::glib;
 use gtk::gio::SimpleAction;
 use gtk::gio::SimpleActionGroup;
 
+use json;
 
 fn main() {
     println!("Notes");
@@ -119,7 +121,6 @@ fn build_ui(app: &Application) {
             current_note.buffer().remove_all_tags(&bound_start, &bound_end);
             current_note.buffer().apply_tag_by_name(action, &bound_start, &bound_end);
             current_note.serialize();
-            current_note.get_vals().lock().unwrap().timer = 0;
 
             
             println!("{} Action triggered", action);
@@ -132,53 +133,53 @@ fn build_ui(app: &Application) {
         println!("{}", act);
     }
 
-    let new_note = move || {
+    let new_note = move |value: Option<(&str, json::JsonValue)>| {
         // get references to existing state
         let mut update_count = note_count.borrow_mut();
         let rc = stack_rc.clone();
 
         println!("Creating new note {}", update_count);
-        let name= format!("New Note {}", update_count);
-        let filename = format!("new_note{}.txt", update_count);
+        let name_raw = format!("New Note {}", update_count);
+        let filename_raw = format!("new_note{}.txt", update_count);
 
+        let (filename, contents) = value.unwrap_or((&filename_raw, 
+                                    json::object!(name: name_raw, contents: "")));
+        let name = contents["name"].to_string();
         // create a new noteview instance and bing 
         let scroll: ScrolledWindow = ScrolledWindow::new();
         let noteview: NoteViewObject = NoteViewObject::new();
         noteview.setup();
-        noteview.set_name(&name);
-        noteview.set_file(&filename);
+        noteview.set_name(&name.to_string());
+        noteview.set_file(&filename.to_string());
         noteview.set_id(*update_count);
+        let mut iter = noteview.buffer().start_iter();
+        noteview.buffer().insert_markup(&mut iter, &contents["contents"].to_string());
 
         *update_count += 1;
 
         scroll.set_child(Some(&noteview));
-        rc.add_titled(&scroll, Some(&format!("note{}", &noteview.get_id())), &name);
-        noteview.buffer().connect_changed( move |arg1| {
-            noteview.set_timer(0);
-            noteview.set_buffstring(&arg1.slice(&arg1.start_iter(), 
-                                                &arg1.end_iter(), 
-                                                false).to_string());
-            noteview.serialize();
-            println!("Key pressed -- resetting timer");
-        });
+        rc.add_titled(&scroll, Some(&format!("note{}", &noteview.get_id())), &name.to_string());
     };
 
     // create a new note when user clicks the new_note_button
+
+    for entry in fs::read_dir("/home/jacob/Documents/personal/Notes/json").unwrap() {
+        let file = entry.unwrap();
+        let filename = file.path().into_os_string().into_string().unwrap();
+        println!("{:?}", file.path());
+
+        let note = json::parse(&fs::read_to_string(&filename).unwrap()).unwrap();
+        println!("Name: {}, contents: {}", note["name"], note["contents"]);
+        new_note(Some((&filename, note)));
+
+    }
+
     new_note_button.set_label("New");
-    new_note_button.connect_clicked(move |_| {new_note()});
+    new_note_button.connect_clicked(move |_| {new_note(None)});
 
 
     // add button to header
     header.pack_start(&new_note_button);
-
-    // Shortcuts :)
-    // new note short cut
-    //let new_note_keybind = ShortcutTrigger::parse_string("<Control>n");
-    //let new_note_action  = ShortcutAction::parse_string("activate");
-    //let new_note_shortcut = Shortcut::new(Some(&new_note_keybind), Some(&new_note_action));
-
-    //let shortcut_controller = ShortcutController::new();
-    //shortcut_controller.add_shortcut(&new_note_shortcut);
 
     // Set parameters for window settings
     window.set_titlebar(Some(&header));
