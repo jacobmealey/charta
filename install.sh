@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 INSTALL_DIR=/usr/bin/
-ASSETS_DIR=/usr/share/goats
+ASSETS_DIR=/usr/share/charta
 
 if [[ !(-e assets/xyz.jacobmealey.Notes.desktop) ]]
 then
@@ -17,7 +17,7 @@ fi
 
 mkdir -p $INSTALL_DIR
 mkdir -p $ASSETS_DIR
-cp assets/clean_notes_db.sql $ASSETS_DIR/notes_db.sql
+mkdir -p $ASSETS_DIR/json/
 cp assets/xyz.jacobmealey.Notes.desktop /usr/share/applications/xyz.jacobmealey.Notes.desktop
 # cp for eventual icon
 cp target/debug/notes $INSTALL_DIR/notes

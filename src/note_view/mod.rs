@@ -5,9 +5,10 @@ use gtk::prelude::*;
 use std::sync::Arc;
 use gtk::WrapMode;
 use gtk::subclass::prelude::ObjectSubclassIsExt;
-use gtk::gio::SimpleAction;
-use gtk::gio::SimpleActionGroup;
 use gtk::glib;
+use std::fs;
+
+use json;
 
 use std::sync::Mutex;
 
@@ -47,12 +48,25 @@ impl NoteViewObject {
             let mut next = iter;
             next.forward_char();
             for tag in iter.toggled_tags(true) {
-                ret.push_str(&format!("<{}>", tag.name().unwrap()));
+                let inter = tag.name().unwrap();
+                let tag_name: Vec<&str>  = inter.split("=").collect();
+                if tag_name.len() == 1 {
+                    ret.push_str(&format!("<{}>", tag.name().unwrap()));
+                } else {
+                    ret.push_str(&format!("<span {}=\"{}\">", tag_name[0], tag_name[1]));
+                }
                 open_tag = tag;
             }
 
             if iter.ends_tag(Some(&open_tag)) {
-                ret.push_str(&format!("</{}>", open_tag.name().unwrap()));
+                let inter = open_tag.name().unwrap();
+                let tag_name: Vec<&str>  = inter.split("=").collect();
+                //ret.push_str(&format!("</span>"));
+                if tag_name.len() == 1 {
+                    ret.push_str(&format!("</{}>", tag_name[0]));
+                } else {
+                    ret.push_str(&format!("</span>"));
+                }
             }
             ret.push_str(&next.visible_text(&iter).to_string());
 
@@ -64,6 +78,22 @@ impl NoteViewObject {
 
     }
 
+    pub fn save(&self) {
+        self.serialize();
+        let binding = Arc::clone(&self.imp().vals);
+        let vals = binding.lock().unwrap();
+        let write_val = fs::write(&vals.filename, json::stringify(
+                json::object!{name: &*vals.name, 
+                              contents: &*vals.serialized
+                }
+        ));
+
+        match write_val {
+            Ok(_) => {},
+            Err(e) => {println!("Error writing file: {e:?}");}
+        }
+    }
+
     pub fn setup(&self) {
         self.set_editable(true);
         self.set_wrap_mode(WrapMode::Word);
@@ -72,11 +102,11 @@ impl NoteViewObject {
         self.set_top_margin(24);
         self.set_bottom_margin(24);
 
-        let bold_tag = gtk::TextTag::new(Some("bold"));
+        let bold_tag = gtk::TextTag::new(Some("b"));
         bold_tag.set_weight(600);
         self.buffer().tag_table().add(&bold_tag);
 
-        let italic_tag = gtk::TextTag::new(Some("italics"));
+        let italic_tag = gtk::TextTag::new(Some("i"));
         italic_tag.set_font(Some("Sans italic 12"));
         self.buffer().tag_table().add(&italic_tag);
 
@@ -105,6 +135,7 @@ impl NoteViewObject {
     pub fn set_buffstring(&self, buffstring: &String) {
         let vals = Arc::clone(&self.imp().vals);
         vals.lock().unwrap().buffer = buffstring.to_string();
+        self.serialize()
     }  
 
     pub fn get_file(&self) -> String {

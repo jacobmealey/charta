@@ -1,11 +1,10 @@
 mod note_view;
 
+use std::fs;
 use note_view::NoteViewObject;
 use gtk::prelude::*;
 use std::rc::Rc;
-use std::sync::Arc;
 use std::cell::RefCell;
-use std::fs;
 use gtk::{Application, 
           ApplicationWindow, 
           ScrolledWindow, 
@@ -14,21 +13,14 @@ use gtk::{Application,
           Stack, 
           HeaderBar, 
           Button, 
-          TextBuffer,
           EditableLabel,
           Separator,
     };
-use sqlite;
-use sqlite::State;
-use std::thread;
-use std::time;
 use gtk::glib;
 use gtk::gio::SimpleAction;
 use gtk::gio::SimpleActionGroup;
-use gtk::glib::GString;
 
-use crate::note_view::NoteViewData;
-
+use json;
 
 fn main() {
     println!("Notes");
@@ -40,8 +32,8 @@ fn main() {
 
     app.connect_activate(build_ui);
     app.set_accels_for_action("win.quit", &["<Ctrl>Q"]);
-    app.set_accels_for_action("note.bold", &["<Ctrl>B"]);
-    app.set_accels_for_action("note.italics", &["<Ctrl>I"]);
+    app.set_accels_for_action("note.b", &["<Ctrl>B"]);
+    app.set_accels_for_action("note.i", &["<Ctrl>I"]);
     app.run();
 }
 
@@ -50,7 +42,6 @@ fn build_ui(app: &Application) {
         .application(app)
         .build();
 
-    let connection = Arc::new(sqlite::open("/usr/share/goats/notes_db.sql").unwrap());
 
     let header = HeaderBar::new();
     let grid: Grid = Grid::new();
@@ -82,17 +73,52 @@ fn build_ui(app: &Application) {
     grid.attach(&active_note_grid, 1, 0, 1, 1);
     sidebar.set_stack(&(*stack_rc));
 
+	let stack_clone = stack_rc.clone();
+	note_title.connect_changed(move |arg1| {
+		let new_name = &arg1.text().to_string();
+		// if for any reason the name is empty, bail out because
+		// the querry will fail 
+		if new_name.is_empty() {
+			return;
+		}
+        // update name in stackviewobject
+        let top_child = stack_clone
+                .visible_child().unwrap()
+                .downcast::<ScrolledWindow>().unwrap()
+                .child().unwrap();
+        let current_note = top_child.downcast::<NoteViewObject>().unwrap();
+        current_note.set_name(new_name);
+        // update name in stack sidebar
+		stack_clone.page(&stack_clone.visible_child().unwrap()).set_title(new_name);
+	});
+
+	// Update note_title to represent what we have clicked on :)
+	stack_rc.connect_visible_child_notify(move |arg1| {
+		let stackname = &arg1.visible_child_name().unwrap().to_string();
+        let top_child = arg1 
+                .visible_child().unwrap()
+                .downcast::<ScrolledWindow>().unwrap()
+                .child().unwrap();
+        let current_note = top_child.downcast::<NoteViewObject>().unwrap();
+        println!("Current Note: {}", current_note.get_name());
+        note_title.set_text(&current_note.get_name());
+		println!("stackname: {}", stackname);
+	});
+
     // ideally actions should be a global list somewhere (like in an XML file? fuck that.) 
     // so for now just try to keep the ducks in a row :). This code seems self explanatory
     // now. I will comment it tomorrow (?) -- Aug 26 2022 will I come back???
-    let actions = vec!["bold", "italics"];
+    let actions = vec!["b", "i"];
     let action_group = SimpleActionGroup::new();
 
     for action in actions {
         let stack_actions = stack_rc.clone();
         let act = SimpleAction::new(action, None);
         act.connect_activate(move |_, _| {
-            let top_child = stack_actions.visible_child().unwrap().downcast::<ScrolledWindow>().unwrap().child().unwrap();
+            let top_child = stack_actions
+                .visible_child().unwrap()
+                .downcast::<ScrolledWindow>().unwrap()
+                .child().unwrap();
             let current_note = top_child.downcast::<NoteViewObject>().unwrap();
             let (bound_start, bound_end) = current_note.buffer().selection_bounds().unwrap();
             let mut is_action: bool = false;
@@ -109,7 +135,6 @@ fn build_ui(app: &Application) {
             current_note.buffer().remove_all_tags(&bound_start, &bound_end);
             current_note.buffer().apply_tag_by_name(action, &bound_start, &bound_end);
             current_note.serialize();
-            current_note.get_vals().lock().unwrap().timer = 0;
 
             
             println!("{} Action triggered", action);
@@ -121,149 +146,75 @@ fn build_ui(app: &Application) {
     for act in action_group.list_actions() {
         println!("{}", act);
     }
-    // update titles in DB when changing name
-    let note_conn = connection.clone();
-    let stack_clone = stack_rc.clone();
-    note_title.connect_changed(move |arg1| {
-        let new_name = &arg1.text().to_string();
-        // if for any reason the name is empty, bail out because
-        // the querry will fail 
-        if new_name.is_empty() {
-            return;
-        }
 
-        let stackname = stack_clone.visible_child_name().unwrap().to_string();
-        let vec: Vec<&str> = stackname.split("e").collect();
-        let note_id = vec.get(1).unwrap();
-
-        let querry = format!("UPDATE notes SET name=\"{}\" WHERE note_id={}", new_name, note_id);
-
-        note_conn.execute(querry).unwrap();
-        stack_clone.page(&stack_clone.visible_child().unwrap()).set_title(new_name);
-    });
-
-    // Update note_title to represent what we have clicked on :)
-    let stack_conn = connection.clone();
-    stack_rc.connect_visible_child_notify(move |arg1| {
-        let stackname = &arg1.visible_child_name().unwrap().to_string();
-        println!("stackname: {}", stackname);
-
-        let vec: Vec<&str> = stackname.split("e").collect();
-        let note_id = vec.get(1).unwrap();
-
-        let querry = format!("SELECT name FROM notes WHERE note_id={}", note_id);
-        println!("{}", querry);
-        let mut statement = stack_conn.prepare(querry).unwrap();
-        if let State::Row = statement.next().unwrap() {
-            note_title.set_text(&statement.read::<String>(0).unwrap());
-        }
-    });
-
-
-    // load exisiting notes from sql
-    connection
-        .iterate("SELECT * FROM notes", |pairs| {
-            let rc = stack_rc.clone();
-
-            let (_, note_id) = pairs[0];
-            let (_, filename) = pairs[2];
-            let (_, name) = pairs[1];
-            println!("{}, {}", filename.unwrap(), name.unwrap());
-
-            let scroll: ScrolledWindow = ScrolledWindow::new();
-            let noteview: NoteViewObject = NoteViewObject::new();
-
-            noteview.set_name(&name.unwrap().to_string());
-            noteview.set_file(&filename.unwrap().to_string());
-            noteview.set_id(note_id.unwrap().parse::<u32>().unwrap()); 
-            let read_in = fs::read_to_string("/usr/share/goats/".to_owned() + &noteview.get_file()).expect("Unable to read file");
-
-
-            noteview.set_buffer(Some(&TextBuffer::builder()
-                                     .text(&read_in)
-                                     .build()));
-            noteview.set_buffstring(&read_in);
-
-            // we call setup /after/ getting everything in place
-            noteview.setup();
-
-            new_note_bindings(&noteview);
-            scroll.set_child(Some(&noteview));
-            noteview.buffer().connect_changed( move |arg1| {
-                noteview.set_timer(0);
-                noteview.set_buffstring(&arg1.slice(&arg1.start_iter(), 
-                                                    &arg1.end_iter(), 
-                                                    false).to_string());
-                noteview.serialize();
-                println!("Key pressed -- resetting timer");
-            });
-
-            rc.add_titled(&scroll, 
-                          Some(&format!("note{}", &note_id.unwrap())[..]),
-                          &name.unwrap()[..]);
-            let mut update_count = note_count.borrow_mut();
-            *update_count += 1;
-
-            true
-        }).unwrap();
-
-
-    let new_note = move || {
+    let new_note = move |value: Option<(&str, json::JsonValue)>| -> NoteViewObject {
         // get references to existing state
         let mut update_count = note_count.borrow_mut();
         let rc = stack_rc.clone();
 
         println!("Creating new note {}", update_count);
-        let name= format!("New Note {}", update_count);
-        let filename = format!("new_note{}.txt", update_count);
+        let name_raw = format!("New Note {}", update_count);
+        let filename_raw = format!("/usr/share/charta/json/new_note{}.txt", update_count);
 
+        let (filename, contents) = value.unwrap_or((&filename_raw, 
+                                    json::object!(name: name_raw, contents: "")));
+        let name = contents["name"].to_string();
         // create a new noteview instance and bing 
         let scroll: ScrolledWindow = ScrolledWindow::new();
         let noteview: NoteViewObject = NoteViewObject::new();
         noteview.setup();
-        noteview.set_name(&name);
-        noteview.set_file(&filename);
+        noteview.set_name(&name.to_string());
+        noteview.set_file(&filename.to_string());
         noteview.set_id(*update_count);
+        let mut iter = noteview.buffer().start_iter();
+        noteview.buffer().insert_markup(&mut iter, &contents["contents"].to_string());
 
         *update_count += 1;
-        // push new note into database
-        let querry = format!("INSERT INTO notes VALUES ({}, \"{}\", \"{}\")", 
-                             noteview.get_id(), 
-                             noteview.get_name(), 
-                             noteview.get_file());
-        println!("{}", querry);
-        connection.execute(querry).unwrap();
 
         scroll.set_child(Some(&noteview));
-        new_note_bindings(&noteview);
-        rc.add_titled(&scroll, Some(&format!("note{}", &noteview.get_id())), &name);
-        noteview.buffer().connect_changed( move |arg1| {
-            noteview.set_timer(0);
-            noteview.set_buffstring(&arg1.slice(&arg1.start_iter(), 
-                                                &arg1.end_iter(), 
-                                                false).to_string());
-            noteview.serialize();
-            println!("Key pressed -- resetting timer");
-        });
+        rc.add_titled(&scroll, Some(&format!("note{}", &noteview.get_id())), &name.to_string());
+        noteview 
     };
 
+    let notes: Rc<RefCell<Vec<NoteViewObject>>> = Rc::new(RefCell::new(Vec::new()));
+
+    let notes_2 = Rc::clone(&notes);
+    // load entries from the directory we are reading from
+    for entry in fs::read_dir("/usr/share/charta/json/").unwrap() {
+        let file = entry.unwrap();
+        let filename = file.path().into_os_string().into_string().unwrap();
+        println!("{:?}", file.path());
+
+        let note = json::parse(&fs::read_to_string(&filename).unwrap()).unwrap();
+        println!("Name: {}, contents: {}", note["name"], note["contents"]);
+        let mut notes = notes_2.borrow_mut();
+        notes.push(new_note(Some((&filename, note))));
+    }
+
+    let notes_3 = Rc::clone(&notes);
     // create a new note when user clicks the new_note_button
     new_note_button.set_label("New");
-    new_note_button.connect_clicked(move |_| {new_note()});
+    new_note_button.connect_clicked(move |_| {
+        let mut notes = notes_3.borrow_mut();
+        notes.push(new_note(None));
+    });
 
 
+    // save files on closing -- not sure how we can make this happen for every type of 
+    // closing so I am not just going to do it for the close button press. 
+    let notes_4 = Rc::clone(&notes);
+    window.connect_close_request(move |_| {
+        println!("Closing..."); 
+        let notes = notes_4.borrow_mut();
+        for note in &*notes {
+            note.save()
+        }
+
+        gtk::Inhibit(false)
+    });
 
     // add button to header
     header.pack_start(&new_note_button);
-
-    // Shortcuts :)
-    // new note short cut
-    //let new_note_keybind = ShortcutTrigger::parse_string("<Control>n");
-    //let new_note_action  = ShortcutAction::parse_string("activate");
-    //let new_note_shortcut = Shortcut::new(Some(&new_note_keybind), Some(&new_note_action));
-
-    //let shortcut_controller = ShortcutController::new();
-    //shortcut_controller.add_shortcut(&new_note_shortcut);
 
     // Set parameters for window settings
     window.set_titlebar(Some(&header));
@@ -274,37 +225,5 @@ fn build_ui(app: &Application) {
     window.set_application(Some(app));
     window.set_child(Some(&grid));
     window.present();
-}
-
-fn save(notes: &NoteViewData, conn: &sqlite::Connection) {
-    let qurrey = format!("SELECT file FROM notes WHERE note_id={}", notes.note_id);
-    println!("{}", qurrey);
-    let mut statement = conn
-        .prepare(qurrey)
-        .unwrap();
-
-    while let State::Row  = statement.next().unwrap() {
-        println!("buffer: {}", &notes.buffer);
-        let filename = "/usr/share/goats/".to_owned() + &statement.read::<String>(0).unwrap();
-        println!("saving to: {}", filename);
-        fs::write(filename, &notes.serialized).expect("Unable to write file");
-    }
-}
-
-
-fn new_note_bindings(noteview: &NoteViewObject) {
-    let vals_clone_t = noteview.get_vals();
-    thread::spawn(move || {
-        loop {
-            let mut vals = vals_clone_t.lock().unwrap();
-            (*vals).timer += 1;
-            let conn = sqlite::open("/usr/share/goats/notes_db.sql").unwrap();
-            if (*vals).timer == 5 {
-                save(&(*vals), &conn);
-            }
-            drop(vals);
-            thread::sleep(time::Duration::from_millis(100));
-        }
-    });
 }
 
