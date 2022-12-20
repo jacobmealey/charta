@@ -1,7 +1,7 @@
 #!/usr/bin/bash
 
 INSTALL_DIR=/usr/bin/
-ASSETS_DIR=/usr/share/goats
+ASSETS_DIR=/usr/share/charta
 
 if [[ !(-e assets/xyz.jacobmealey.Notes.desktop) ]]
 then

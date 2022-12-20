@@ -1,8 +1,6 @@
 [Desktop Entry]
-Name=Goats
-Comment=Goats is Notes
+Name=Charta
 Exec=/usr/bin/notes
-#Icon=cura-icon
 Terminal=false
 Categories=Utility;
 Type=Application
