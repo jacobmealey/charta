@@ -154,7 +154,7 @@ fn build_ui(app: &Application) {
 
         println!("Creating new note {}", update_count);
         let name_raw = format!("New Note {}", update_count);
-        let filename_raw = format!("/home/jacob/Documents/personal/Notes/json/new_note{}.txt", update_count);
+        let filename_raw = format!("/usr/share/goats/json/new_note{}.txt", update_count);
 
         let (filename, contents) = value.unwrap_or((&filename_raw, 
                                     json::object!(name: name_raw, contents: "")));
@@ -180,7 +180,7 @@ fn build_ui(app: &Application) {
 
     let notes_2 = Rc::clone(&notes);
     // load entries from the directory we are reading from
-    for entry in fs::read_dir("/home/jacob/Documents/personal/Notes/json").unwrap() {
+    for entry in fs::read_dir("/usr/share/goats/json").unwrap() {
         let file = entry.unwrap();
         let filename = file.path().into_os_string().into_string().unwrap();
         println!("{:?}", file.path());
