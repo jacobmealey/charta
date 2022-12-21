@@ -120,7 +120,31 @@ fn build_ui(app: &Application) {
                 .downcast::<ScrolledWindow>().unwrap()
                 .child().unwrap();
             let current_note = top_child.downcast::<NoteViewObject>().unwrap();
-            let (bound_start, bound_end) = current_note.buffer().selection_bounds().unwrap();
+            let (bound_start, bound_end) = match current_note.buffer().selection_bounds() {
+                Some(bounds) => bounds,
+                None => {
+                    current_note.buffer().insert_at_cursor("  ");
+                    let mut iter_a = current_note.buffer().
+                        iter_at_offset(current_note
+                                       .buffer()
+                                       .cursor_position());
+                    iter_a.backward_chars(2);
+
+                    let iter_b = current_note.buffer().
+                        iter_at_offset(current_note
+                                       .buffer()
+                                       .cursor_position());
+
+                    let mut iter_c = current_note.buffer()
+                        .iter_at_offset(current_note
+                                        .buffer()
+                                        .cursor_position());
+
+                    iter_c.backward_char();
+                    current_note.buffer().place_cursor(&iter_c);
+                    (iter_a, iter_b)
+                }
+            };
             let mut is_action: bool = false;
             for tag in bound_start.tags() {
                 if tag.name().unwrap() == action {
