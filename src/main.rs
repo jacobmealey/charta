@@ -120,6 +120,9 @@ fn build_ui(app: &Application) {
                 .downcast::<ScrolledWindow>().unwrap()
                 .child().unwrap();
             let current_note = top_child.downcast::<NoteViewObject>().unwrap();
+            // if the user has highlighted some section of text, get the bounds directly, if the
+            // user has simply pressed a keybinding with no highlighint insert zero-width spaces
+            // and mark them as the start and end locations.
             let (bound_start, bound_end) = match current_note.buffer().selection_bounds() {
                 Some(bounds) => bounds,
                 None => {
