@@ -44,7 +44,7 @@ impl NoteViewObject {
         let mut open_tag = gtk::TextTag::new(Some("filler"));
 
         let mut ret = String::from("");
-        while iter != end {
+        while iter < end {
             let mut next = iter;
             next.forward_char();
             for tag in iter.toggled_tags(true) {
@@ -58,7 +58,7 @@ impl NoteViewObject {
                 open_tag = tag;
             }
 
-            if iter.ends_tag(Some(&open_tag)) {
+            if iter.ends_tag(Some(&open_tag)) || iter==end {
                 let inter = open_tag.name().unwrap();
                 let tag_name: Vec<&str>  = inter.split("=").collect();
                 //ret.push_str(&format!("</span>"));
@@ -71,7 +71,7 @@ impl NoteViewObject {
             ret.push_str(&next.visible_text(&iter).to_string());
 
             iter.forward_char();
-        }
+       }
         println!("Ret: {}", ret);
         let vals = Arc::clone(&self.imp().vals);
         vals.lock().unwrap().serialized = ret;

@@ -123,24 +123,24 @@ fn build_ui(app: &Application) {
             let (bound_start, bound_end) = match current_note.buffer().selection_bounds() {
                 Some(bounds) => bounds,
                 None => {
-                    current_note.buffer().insert_at_cursor("\u{200B}\u{200B}");
+                    current_note.buffer().insert_at_cursor("\u{FEFF}\u{FEFF}\u{FEFF}");
                     let mut iter_a = current_note.buffer().
                         iter_at_offset(current_note
                                        .buffer()
                                        .cursor_position());
-                    iter_a.backward_chars(2);
+                    iter_a.backward_chars(3);
 
                     let iter_b = current_note.buffer().
                         iter_at_offset(current_note
                                        .buffer()
-                                       .cursor_position());
+                                       .cursor_position() - 1);
 
                     let mut iter_c = current_note.buffer()
                         .iter_at_offset(current_note
                                         .buffer()
                                         .cursor_position());
 
-                    iter_c.backward_char();
+                    iter_c.backward_chars(2);
                     current_note.buffer().place_cursor(&iter_c);
                     (iter_a, iter_b)
                 }
