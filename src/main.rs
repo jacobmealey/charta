@@ -123,7 +123,7 @@ fn build_ui(app: &Application) {
             let (bound_start, bound_end) = match current_note.buffer().selection_bounds() {
                 Some(bounds) => bounds,
                 None => {
-                    current_note.buffer().insert_at_cursor("  ");
+                    current_note.buffer().insert_at_cursor("\0\0");
                     let mut iter_a = current_note.buffer().
                         iter_at_offset(current_note
                                        .buffer()
