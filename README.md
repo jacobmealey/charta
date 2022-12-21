@@ -5,7 +5,7 @@ Native and simple notes for Gnome and GTK.
 
 
 ### Building 
-It's written in Rust with Cargo so install those. In the source directory simply run `cargo build` to build it and `cargo run` to run it. 
+It's written in [Rust](https://www.rust-lang.org/learn/get-started) with Cargo. With the rust toolchain installed run `cargo build` to build it and `cargo run` to run it. 
 #### Installing:
 ```
 sudo ./install.sh
