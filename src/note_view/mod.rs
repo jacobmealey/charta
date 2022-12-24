@@ -8,7 +8,6 @@ use gtk::subclass::prelude::ObjectSubclassIsExt;
 use gtk::glib;
 use std::fs;
 
-use json;
 
 use std::sync::Mutex;
 
@@ -17,6 +16,12 @@ glib::wrapper! {
     @extends gtk::TextView, gtk::Widget, gtk::gio::SimpleActionGroup,
     @implements gtk::Accessible, gtk::Buildable,  
     gtk::ConstraintTarget, gtk::Orientable;
+}
+
+impl Default for NoteViewObject {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl NoteViewObject {
@@ -49,7 +54,7 @@ impl NoteViewObject {
             next.forward_char();
             for tag in iter.toggled_tags(true) {
                 let inter = tag.name().unwrap();
-                let tag_name: Vec<&str>  = inter.split("=").collect();
+                let tag_name: Vec<&str>  = inter.split('=').collect();
                 if tag_name.len() == 1 {
                     ret.push_str(&format!("<{}>", tag.name().unwrap()));
                 } else {
@@ -60,15 +65,15 @@ impl NoteViewObject {
 
             if iter.ends_tag(Some(&open_tag)) || iter==end {
                 let inter = open_tag.name().unwrap();
-                let tag_name: Vec<&str>  = inter.split("=").collect();
+                let tag_name: Vec<&str>  = inter.split('=').collect();
                 //ret.push_str(&format!("</span>"));
                 if tag_name.len() == 1 {
                     ret.push_str(&format!("</{}>", tag_name[0]));
                 } else {
-                    ret.push_str(&format!("</span>"));
+                    ret.push_str("</span>");
                 }
             }
-            ret.push_str(&next.visible_text(&iter).to_string());
+            ret.push_str(&next.visible_text(&iter));
 
             iter.forward_char();
        }

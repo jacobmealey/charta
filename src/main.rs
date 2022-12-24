@@ -20,8 +20,6 @@ use gtk::glib;
 use gtk::gio::SimpleAction;
 use gtk::gio::SimpleActionGroup;
 
-use json;
-
 fn main() {
     println!("Notes");
     println!("Author: Jacob Mealey");
@@ -50,7 +48,7 @@ fn build_ui(app: &Application) {
     let stack_rc = Rc::new(Stack::new());
     let sidebar: StackSidebar = StackSidebar::new();
     let new_note_button = Button::new();
-    let note_title = EditableLabel::new("damn note");
+    let note_title = EditableLabel::new("");
     let note_title_sep = Separator::new(gtk::Orientation::Horizontal);
 
     let action_close = SimpleAction::new("quit", None);
@@ -71,7 +69,7 @@ fn build_ui(app: &Application) {
     active_note_grid.attach(&note_title, 0, 0, 1, 1);
     grid.attach(&sidebar, 0, 0, 1, 1);
     grid.attach(&active_note_grid, 1, 0, 1, 1);
-    sidebar.set_stack(&(*stack_rc));
+    sidebar.set_stack(&stack_rc);
 
 	let stack_clone = stack_rc.clone();
 	note_title.connect_changed(move |arg1| {
@@ -127,11 +125,10 @@ fn build_ui(app: &Application) {
                 Some(bounds) => bounds,
                 None => {
                     current_note.buffer().insert_at_cursor("\u{FEFF}\u{FEFF}\u{FEFF}");
-                    let mut iter_a = current_note.buffer().
+                    let iter_a = current_note.buffer().
                         iter_at_offset(current_note
                                        .buffer()
-                                       .cursor_position());
-                    iter_a.backward_chars(3);
+                                       .cursor_position() - 3);
 
                     let iter_b = current_note.buffer().
                         iter_at_offset(current_note
@@ -190,7 +187,7 @@ fn build_ui(app: &Application) {
         let scroll: ScrolledWindow = ScrolledWindow::new();
         let noteview: NoteViewObject = NoteViewObject::new();
         noteview.setup();
-        noteview.set_name(&name.to_string());
+        noteview.set_name(&name);
         noteview.set_file(&filename.to_string());
         noteview.set_id(*update_count);
         let mut iter = noteview.buffer().start_iter();
@@ -199,7 +196,7 @@ fn build_ui(app: &Application) {
         *update_count += 1;
 
         scroll.set_child(Some(&noteview));
-        rc.add_titled(&scroll, Some(&format!("note{}", &noteview.get_id())), &name.to_string());
+        rc.add_titled(&scroll, Some(&format!("note{}", &noteview.get_id())), &name);
         noteview 
     };
 
@@ -248,7 +245,7 @@ fn build_ui(app: &Application) {
     //window.add_controller(&shortcut_controller);
     window.set_default_width(650);
     window.set_default_height(420);
-    window.set_title(Some("Notes"));
+    window.set_title(Some("Charta"));
     window.set_application(Some(app));
     window.set_child(Some(&grid));
     window.present();
