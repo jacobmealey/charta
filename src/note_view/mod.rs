@@ -114,6 +114,47 @@ impl NoteViewObject {
         italic_tag.set_font(Some("Sans italic 12"));
         self.buffer().tag_table().add(&italic_tag);
 
+        let bullet_tag = gtk::TextTag::builder()
+                .name("bullet")
+                .indent_set(true)
+                .indent(10)
+                .build();
+
+        self.buffer().tag_table().add(&bullet_tag);
+        self.buffer().connect_changed(|note|  {
+
+            let mut cursor = note.iter_at_offset(note.cursor_position());
+            let line_start = note.iter_at_line(cursor.line()).expect("Unable to get line start");
+            let parsing = note.slice(&line_start, &cursor, true);
+
+            let mut is_bullet = false;
+            for tag in line_start.tags() {
+                if tag.name().expect("No tag name specified") == "bullet" && line_start == cursor {
+                    is_bullet = true;
+                    break;
+                } else {
+                    println!("texttag: {:?}", tag);
+                }
+            }
+
+            if is_bullet {
+                note.insert_at_cursor("-  ");
+                return;
+            }
+
+            // if it isn't the starting action bail out
+            if parsing != "-  " {
+                return;
+            }
+            println!("Starting bulleted list");
+            note.apply_tag_by_name("bullet", &line_start, &cursor);
+            cursor.backward_char();
+            //note.insert(&mut cursor, " ");
+            note.place_cursor(&cursor);
+
+        });
+
+
         //self.add_action(&action_bold);
     }
 
