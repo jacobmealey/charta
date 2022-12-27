@@ -55,9 +55,9 @@ impl NoteViewObject {
             for tag in iter.toggled_tags(true) {
                 let inter = tag.name().unwrap();
                 let tag_name: Vec<&str>  = inter.split('=').collect();
-                if tag_name.len() == 1 {
+                if tag_name.len() == 1 && tag.name().expect("no tag name") != "bullet"{
                     ret.push_str(&format!("<{}>", tag.name().unwrap()));
-                } else {
+                } else if tag_name[0] != "bullet" {
                     ret.push_str(&format!("<span {}=\"{}\">", tag_name[0], tag_name[1]));
                 }
                 open_tag = tag;
@@ -66,10 +66,9 @@ impl NoteViewObject {
             if iter.ends_tag(Some(&open_tag)) || iter==end {
                 let inter = open_tag.name().unwrap();
                 let tag_name: Vec<&str>  = inter.split('=').collect();
-                //ret.push_str(&format!("</span>"));
-                if tag_name.len() == 1 {
+                if tag_name.len() == 1 && tag_name[0] != "bullet"{
                     ret.push_str(&format!("</{}>", tag_name[0]));
-                } else {
+                } else if open_tag.name().expect("no tag name") != "bullet"{
                     ret.push_str("</span>");
                 }
             }
