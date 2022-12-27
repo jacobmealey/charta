@@ -217,19 +217,18 @@ fn build_ui(app: &Application) {
             }
 
             if is_bullet {
-                note.insert_at_cursor("-");
-                // cursor.forward_char();
-                // note.place_cursor(&cursor);
+                note.insert_at_cursor("-  ");
                 return;
             }
 
             // if it isn't the starting action bail out
-            if parsing != "- " {
+            if parsing != "-  " {
                 return;
             }
             println!("Starting bulleted list");
             note.apply_tag_by_name("bullet", &line_start, &cursor);
             cursor.backward_char();
+            //note.insert(&mut cursor, " ");
             note.place_cursor(&cursor);
 
         });
