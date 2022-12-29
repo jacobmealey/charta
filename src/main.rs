@@ -15,10 +15,14 @@ use gtk::{Application,
           Button, 
           EditableLabel,
           Separator,
+          CssProvider,
+          StyleContext,
+
     };
 use gtk::glib;
 use gtk::gio::SimpleAction;
 use gtk::gio::SimpleActionGroup;
+use gtk::gdk::Display;
 
 fn main() {
     println!("Notes");
@@ -28,6 +32,7 @@ fn main() {
         .application_id("xyz.jacobmealey.Notes")
         .build();
 
+    app.connect_startup(|_| load_css());
     app.connect_activate(build_ui);
     app.set_accels_for_action("win.quit", &["<Ctrl>Q"]);
     app.set_accels_for_action("note.b", &["<Ctrl>B"]);
@@ -35,11 +40,30 @@ fn main() {
     app.run();
 }
 
+// taken from https://gtk-rs.org/gtk4-rs/stable/latest/book/css.html
+fn load_css() {
+    let provider = CssProvider::new();
+    provider.load_from_data(include_bytes!("style.css"));
+
+    StyleContext::add_provider_for_display(
+        &Display::default().expect("Could not connect to a display."),
+        &provider,
+        gtk::STYLE_PROVIDER_PRIORITY_APPLICATION
+    );
+}
+
 fn build_ui(app: &Application) {
+    let button = Button::builder()
+        .label("Press me!")
+        .margin_top(12)
+        .margin_bottom(12)
+        .margin_start(12)
+        .margin_end(12)
+        .build();
+
     let window: ApplicationWindow = ApplicationWindow::builder()
         .application(app)
         .build();
-
 
     let header = HeaderBar::new();
     let grid: Grid = Grid::new();
@@ -242,12 +266,11 @@ fn build_ui(app: &Application) {
 
     // Set parameters for window settings
     window.set_titlebar(Some(&header));
-    //window.add_controller(&shortcut_controller);
     window.set_default_width(650);
     window.set_default_height(420);
     window.set_title(Some("Charta"));
     window.set_application(Some(app));
     window.set_child(Some(&grid));
-    window.present();
+    window.show();
 }
 
