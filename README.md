@@ -1,7 +1,7 @@
 # charta
 Native and simple notes for Gnome and GTK.
 
-![Screenshot from 2022-12-21 15-50-32](https://user-images.githubusercontent.com/8949007/209000441-60c9a4e7-fe6d-4da8-b403-55f5295a80ef.png)
+![Screenshot from 2022-12-27 00-57-23](https://user-images.githubusercontent.com/8949007/209889842-b388226b-3db4-4e82-88fe-3c8e50e39633.png)
 
 
 ### Building 
