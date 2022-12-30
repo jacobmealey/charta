@@ -132,18 +132,16 @@ impl NoteViewObject {
 
             let mut is_bullet = false;
 
-            for tag in line_start.tags() {
-                unsafe{
+            unsafe{
+                for tag in line_start.tags() {
                     if tag.name().expect("No tag name specified") == "bullet" && note.char_count() >  size && line_start == cursor {
-                            is_bullet = true;
-                            break;
-                        } else {
-                            println!("texttag: {:?}", tag);
-                        }
+                        is_bullet = true;
+                        break;
+                    } else {
+                        println!("texttag: {:?}", tag);
+                    }
                 }
-            }
 
-            unsafe {
                 size = note.char_count();
             }
 
