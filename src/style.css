@@ -4,3 +4,11 @@ editablelabel {
     padding-top: 2px;
     padding-bottom: 2px;
 }
+
+textview {
+    padding-left: 35px;
+    padding-right: 35px;
+    padding-top: 24px;
+    padding-bottom: 24px;
+}
+

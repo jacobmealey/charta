@@ -3,6 +3,7 @@ pub mod imp;
 use glib::Object;
 use gtk::prelude::*;
 use std::sync::Arc;
+use std::sync::atomic::AtomicI32;
 use gtk::WrapMode;
 use gtk::subclass::prelude::ObjectSubclassIsExt;
 use gtk::glib;
@@ -101,10 +102,10 @@ impl NoteViewObject {
     pub fn setup(&self) {
         self.set_editable(true);
         self.set_wrap_mode(WrapMode::Word);
-        self.set_left_margin(35);
-        self.set_right_margin(35);
-        self.set_top_margin(24);
-        self.set_bottom_margin(24);
+        // self.set_left_margin(35);
+        // self.set_right_margin(35);
+        // self.set_top_margin(24);
+        // self.set_bottom_margin(24);
 
         let bold_tag = gtk::TextTag::new(Some("b"));
         bold_tag.set_weight(600);
@@ -121,21 +122,31 @@ impl NoteViewObject {
                 .build();
 
         self.buffer().tag_table().add(&bullet_tag);
-        self.buffer().connect_changed(|note|  {
 
+        self.buffer().connect_changed(|note|  {
             let mut cursor = note.iter_at_offset(note.cursor_position());
             let line_start = note.iter_at_line(cursor.line()).expect("Unable to get line start");
             let parsing = note.slice(&line_start, &cursor, true);
+            
+            static mut size: i32 = 0;
 
             let mut is_bullet = false;
+
             for tag in line_start.tags() {
-                if tag.name().expect("No tag name specified") == "bullet" && line_start == cursor {
-                    is_bullet = true;
-                    break;
-                } else {
-                    println!("texttag: {:?}", tag);
+                unsafe{
+                    if tag.name().expect("No tag name specified") == "bullet" && note.char_count() >  size && line_start == cursor {
+                            is_bullet = true;
+                            break;
+                        } else {
+                            println!("texttag: {:?}", tag);
+                        }
                 }
             }
+
+            unsafe {
+                size = note.char_count();
+            }
+
 
             if is_bullet {
                 note.insert_at_cursor("-  ");
@@ -149,7 +160,6 @@ impl NoteViewObject {
             println!("Starting bulleted list");
             note.apply_tag_by_name("bullet", &line_start, &cursor);
             cursor.backward_char();
-            //note.insert(&mut cursor, " ");
             note.place_cursor(&cursor);
 
         });

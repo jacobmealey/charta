@@ -53,14 +53,6 @@ fn load_css() {
 }
 
 fn build_ui(app: &Application) {
-    let button = Button::builder()
-        .label("Press me!")
-        .margin_top(12)
-        .margin_bottom(12)
-        .margin_start(12)
-        .margin_end(12)
-        .build();
-
     let window: ApplicationWindow = ApplicationWindow::builder()
         .application(app)
         .build();
