@@ -129,9 +129,12 @@ impl NoteViewObject {
             let parsing = note.slice(&line_start, &cursor, true);
             
             static mut size: i32 = 0;
-
             let mut is_bullet = false;
 
+            // PLEASE find a way to this in a safe way? 
+            // The reason its unsafe is the use of a mutable static, we are tracking the size 
+            // of the buffer, and if we are decreasing in size then don't attempt to insert 
+            // another bullet
             unsafe{
                 for tag in line_start.tags() {
                     if tag.name().expect("No tag name specified") == "bullet" && note.char_count() >  size && line_start == cursor {
