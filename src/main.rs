@@ -28,12 +28,15 @@ fn main() {
     println!("Notes");
     println!("Author: Jacob Mealey");
     println!("Website: jacobmealey.xyz");
+
+
     let app = Application::builder()
         .application_id("xyz.jacobmealey.Notes")
         .build();
 
-    app.connect_startup(|_| load_css());
+
     app.connect_activate(build_ui);
+    app.connect_startup(|_| load_css());
     app.set_accels_for_action("win.quit", &["<Ctrl>Q"]);
     app.set_accels_for_action("note.b", &["<Ctrl>B"]);
     app.set_accels_for_action("note.i", &["<Ctrl>I"]);
@@ -42,14 +45,16 @@ fn main() {
 
 // taken from https://gtk-rs.org/gtk4-rs/stable/latest/book/css.html
 fn load_css() {
-    let provider = CssProvider::new();
-    provider.load_from_data(include_bytes!("style.css"));
+    let provider_charta = CssProvider::new();
+    let charta_css_path = "/usr/share/charta/style.css";
+    provider_charta.load_from_path(std::path::Path::new(&charta_css_path));
 
     StyleContext::add_provider_for_display(
         &Display::default().expect("Could not connect to a display."),
-        &provider,
+        &provider_charta,
         gtk::STYLE_PROVIDER_PRIORITY_APPLICATION
     );
+    
 }
 
 fn build_ui(app: &Application) {
