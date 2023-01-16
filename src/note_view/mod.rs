@@ -83,17 +83,15 @@ impl NoteViewObject {
             None => {self.buffer().insert(&mut self.buffer().end_iter(), &markup); return}
         };
 
-        // get the name of the tag 
+        // get the name of the tag and generate the end tag based on it
         let tag_name = &markup[mat.start() + 1..mat.end() - 1];
         let end_tag = format!("</{}>", tag_name);
         println!("Tag Name: {}", tag_name);
 
-        // get every before and after the start tag.
+        // get all text before and after the start tag.
         let (pre, post) = markup.as_str().split_at(mat.start());
         let post = post.replacen(&format!("<{}>", tag_name), "", 1);
         // push the pre to the buffer 
-        println!("first pre: {}", pre);
-        println!("first post: {}", post);
         self.buffer().insert(&mut self.buffer().end_iter(), pre);
         let tag_start = self.buffer().end_iter().offset();
 
@@ -106,18 +104,19 @@ impl NoteViewObject {
             None => return // probably shouldn't return in this case but.. /shrug/
         };
 
-        let (pre, post) = post.split_at(end_mat.start());
+        // in this case inner is the text between the two tags which may also be parsable
+        // so we pass it to load as well. post all the text after the end of the tag 
+        // which again may be parseable so we pass it to parse.
+        // Note that we must handle everything in the inner before handling the post
+        let (inner, post) = post.split_at(end_mat.start());
         let post = post.replacen(&format!("</{}>", tag_name), "", 1);
         // push the pre to the buffer 
-        println!("recurse pre: {}", pre);
-        self.load(pre.to_string());
+        self.load(inner.to_string());
         let tag_end = self.buffer().end_iter().offset();
         println!("Applying tag: {}, from {}-{}", tag_name, tag_start, tag_end);
         self.buffer().apply_tag_by_name(tag_name, 
                                         &self.buffer().iter_at_offset(tag_start), 
                                         &self.buffer().iter_at_offset(tag_end));        
-
-        println!("recurse_post: {}", post);
         self.load(post.to_string());
     }
 
