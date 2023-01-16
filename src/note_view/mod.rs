@@ -8,6 +8,8 @@ use gtk::WrapMode;
 use gtk::subclass::prelude::ObjectSubclassIsExt;
 use gtk::glib;
 use std::fs;
+use std::vec::Vec;
+use regex::Regex;
 
 
 use std::sync::Mutex;
@@ -47,40 +49,82 @@ impl NoteViewObject {
         println!("serializes");
         let (start, end) = self.buffer().bounds();
         let mut iter = start;
-        let mut open_tag = gtk::TextTag::new(Some("filler"));
+        let mut open_tag: Vec<gtk::TextTag> = Vec::new();
 
         let mut ret = String::from("");
         while iter < end {
             let mut next = iter;
             next.forward_char();
+            // All tags at the current position
             for tag in iter.toggled_tags(true) {
-                let inter = tag.name().unwrap();
-                let tag_name: Vec<&str>  = inter.split('=').collect();
-                if tag_name.len() == 1 && tag.name().expect("no tag name") != "bullet"{
-                    ret.push_str(&format!("<{}>", tag.name().unwrap()));
-                } else if tag_name[0] != "bullet" {
-                    ret.push_str(&format!("<span {}=\"{}\">", tag_name[0], tag_name[1]));
-                }
-                open_tag = tag;
+                ret.push_str(&format!("<{}>", tag.name().unwrap()));
+                open_tag.push(tag);
             }
 
-            if iter.ends_tag(Some(&open_tag)) || iter==end {
-                let inter = open_tag.name().unwrap();
-                let tag_name: Vec<&str>  = inter.split('=').collect();
-                if tag_name.len() == 1 && tag_name[0] != "bullet"{
-                    ret.push_str(&format!("</{}>", tag_name[0]));
-                } else if open_tag.name().expect("no tag name") != "bullet"{
-                    ret.push_str("</span>");
-                }
+            if !open_tag.is_empty() && iter.ends_tag(Some(open_tag.last().unwrap())){
+                let tag = open_tag.pop().expect("Nothing to pop...");
+                ret.push_str(&format!("</{}>", tag.name().expect("No Tag Name")));
             }
             ret.push_str(&next.visible_text(&iter));
 
             iter.forward_char();
        }
-        println!("Ret: {}", ret);
+        println!("Ret:\n {}", ret);
         let vals = Arc::clone(&self.imp().vals);
         vals.lock().unwrap().serialized = ret;
 
+    }
+
+    pub fn load(&mut self, markup: String, offset: i32) {
+        println!("Begin Parsing: {}", markup);
+        let (start, mut end) = self.buffer().bounds();
+        let leader = 0;
+        let follower = 0;
+
+        let re = Regex::new(r"<[a-z]*>").unwrap();
+        let mat = match re.find(&markup) {
+            Some(m) => m,
+            None => {self.buffer().insert(&mut end, &markup); return}
+        };
+
+        // get the name of the tag 
+        let tag_name = &markup[mat.start() + 1..mat.end() - 1];
+        let end_tag = format!("</{}>", tag_name);
+        println!("Tag Name: {}", tag_name);
+
+        // get every before and after the start tag.
+        let (pre, post) = markup.as_str().split_at(mat.start());
+        let post = post.replacen(&format!("<{}>", tag_name), "", 1);
+        // push the pre to the buffer 
+        println!("first pre: {}", pre);
+        println!("first post: {}", post);
+        self.buffer().insert(&mut end, pre);
+        let (start, mut end) = self.buffer().bounds();
+        let tag_start = end.offset();
+
+        // we must find the eneding tag in the post section 
+        // then we will attempt to parse everything between the tags 
+        // and everything after the end tag
+        let end_re = Regex::new(&end_tag).unwrap();
+        let end_mat = match end_re.find(&post) {
+            Some(m) => m,
+            None => return // probably shouldn't return in this case but.. /shrug/
+        };
+
+        let (pre, post) = post.split_at(end_mat.start());
+        let post = post.replacen(&format!("</{}>", tag_name), "", 1);
+        // push the pre to the buffer 
+        println!("recurse pre: {}", pre);
+        self.load(pre.to_string(), tag_start);
+        let (start, mut end) = self.buffer().bounds();
+        let tag_end = end.offset();
+        println!("Applying tag: {}, from {}-{}", tag_name, tag_start, tag_end);
+        self.buffer().apply_tag_by_name(tag_name, 
+                                        &self.buffer().iter_at_offset(tag_start), 
+                                        &self.buffer().iter_at_offset(tag_end));        
+
+        println!("recurse_post: {}", post);
+        self.load(post.to_string(), tag_end);
     }
 
     pub fn save(&self) {
