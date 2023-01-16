@@ -206,13 +206,12 @@ fn build_ui(app: &Application) {
         let name = contents["name"].to_string();
         // create a new noteview instance and bing 
         let scroll: ScrolledWindow = ScrolledWindow::new();
-        let noteview: NoteViewObject = NoteViewObject::new();
+        let mut noteview: NoteViewObject = NoteViewObject::new();
         noteview.setup();
         noteview.set_name(&name);
         noteview.set_file(&filename.to_string());
         noteview.set_id(*update_count);
-        let mut iter = noteview.buffer().start_iter();
-        noteview.buffer().insert_markup(&mut iter, &contents["contents"].to_string());
+        noteview.load(contents["contents"].to_string());
 
         *update_count += 1;
 
