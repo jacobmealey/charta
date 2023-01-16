@@ -3,7 +3,6 @@ pub mod imp;
 use glib::Object;
 use gtk::prelude::*;
 use std::sync::Arc;
-use std::sync::atomic::AtomicI32;
 use gtk::WrapMode;
 use gtk::subclass::prelude::ObjectSubclassIsExt;
 use gtk::glib;
@@ -75,16 +74,13 @@ impl NoteViewObject {
 
     }
 
-    pub fn load(&mut self, markup: String, offset: i32) {
+    pub fn load(&mut self, markup: String) {
         println!("Begin Parsing: {}", markup);
-        let (start, mut end) = self.buffer().bounds();
-        let leader = 0;
-        let follower = 0;
 
         let re = Regex::new(r"<[a-z]*>").unwrap();
         let mat = match re.find(&markup) {
             Some(m) => m,
-            None => {self.buffer().insert(&mut end, &markup); return}
+            None => {self.buffer().insert(&mut self.buffer().end_iter(), &markup); return}
         };
 
         // get the name of the tag 
@@ -98,9 +94,8 @@ impl NoteViewObject {
         // push the pre to the buffer 
         println!("first pre: {}", pre);
         println!("first post: {}", post);
-        self.buffer().insert(&mut end, pre);
-        let (start, mut end) = self.buffer().bounds();
-        let tag_start = end.offset();
+        self.buffer().insert(&mut self.buffer().end_iter(), pre);
+        let tag_start = self.buffer().end_iter().offset();
 
         // we must find the eneding tag in the post section 
         // then we will attempt to parse everything between the tags 
@@ -115,16 +110,15 @@ impl NoteViewObject {
         let post = post.replacen(&format!("</{}>", tag_name), "", 1);
         // push the pre to the buffer 
         println!("recurse pre: {}", pre);
-        self.load(pre.to_string(), tag_start);
-        let (start, mut end) = self.buffer().bounds();
-        let tag_end = end.offset();
+        self.load(pre.to_string());
+        let tag_end = self.buffer().end_iter().offset();
         println!("Applying tag: {}, from {}-{}", tag_name, tag_start, tag_end);
         self.buffer().apply_tag_by_name(tag_name, 
                                         &self.buffer().iter_at_offset(tag_start), 
                                         &self.buffer().iter_at_offset(tag_end));        
 
         println!("recurse_post: {}", post);
-        self.load(post.to_string(), tag_end);
+        self.load(post.to_string());
     }
 
     pub fn save(&self) {
@@ -172,7 +166,7 @@ impl NoteViewObject {
             let line_start = note.iter_at_line(cursor.line()).expect("Unable to get line start");
             let parsing = note.slice(&line_start, &cursor, true);
             
-            static mut size: i32 = 0;
+            static mut SIZE: i32 = 0;
             let mut is_bullet = false;
 
             // PLEASE find a way to this in a safe way? 
@@ -181,7 +175,7 @@ impl NoteViewObject {
             // another bullet
             unsafe{
                 for tag in line_start.tags() {
-                    if tag.name().expect("No tag name specified") == "bullet" && note.char_count() >  size && line_start == cursor {
+                    if tag.name().expect("No tag name specified") == "bullet" && note.char_count() >  SIZE && line_start == cursor {
                         is_bullet = true;
                         break;
                     } else {
@@ -189,7 +183,7 @@ impl NoteViewObject {
                     }
                 }
 
-                size = note.char_count();
+                SIZE = note.char_count();
             }
 
 

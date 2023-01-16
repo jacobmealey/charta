@@ -211,9 +211,7 @@ fn build_ui(app: &Application) {
         noteview.set_name(&name);
         noteview.set_file(&filename.to_string());
         noteview.set_id(*update_count);
-        let mut iter = noteview.buffer().start_iter();
-        //noteview.buffer().insert_markup(&mut iter, &contents["contents"].to_string());
-        noteview.load(contents["contents"].to_string(), 0);
+        noteview.load(contents["contents"].to_string());
 
         *update_count += 1;
 
