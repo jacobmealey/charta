@@ -3,12 +3,18 @@ editablelabel {
     padding-left: 2px;
     padding-top: 2px;
     padding-bottom: 2px;
+    background-color: white;
 }
 
 textview {
-    padding-left: 35px;
-    padding-right: 35px;
+    padding-left: 20px;
+    padding-right: 20px;
     padding-top: 24px;
     padding-bottom: 24px;
+    min-width: 600px;
+}
+
+scrolledwindow {
+    background-color: white;
 }
 

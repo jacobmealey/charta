@@ -212,6 +212,7 @@ fn build_ui(app: &Application) {
         noteview.set_file(&filename.to_string());
         noteview.set_id(*update_count);
         noteview.load(contents["contents"].to_string());
+        noteview.set_halign(gtk::Align::Center);
 
         *update_count += 1;
 
