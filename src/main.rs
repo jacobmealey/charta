@@ -108,7 +108,9 @@ fn build_ui(app: &Application) {
         let current_note = top_child.downcast::<NoteViewObject>().unwrap();
         current_note.set_name(new_name);
         // update name in stack sidebar
-		stack_clone.page(&stack_clone.visible_child().unwrap()).set_title(new_name);
+        let new_name = new_name.to_string();
+        let name_title = if new_name.len() < 10 {new_name} else { format!("{}...", &new_name[0..10])};
+		stack_clone.page(&stack_clone.visible_child().unwrap()).set_title(&name_title);
 	});
 
 	// Update note_title to represent what we have clicked on :)
@@ -217,7 +219,8 @@ fn build_ui(app: &Application) {
         *update_count += 1;
 
         scroll.set_child(Some(&noteview));
-        rc.add_titled(&scroll, Some(&format!("note{}", &noteview.get_id())), &name);
+        let name_title = if name.len() < 10 {name} else { format!("{}...", (&name[0..10]))};
+        rc.add_titled(&scroll, Some(&format!("note{}", &noteview.get_id())), &name_title);
         noteview 
     };
 
