@@ -21,6 +21,7 @@ mkdir -p $ASSETS_DIR/json/
 cp assets/xyz.jacobmealey.Notes.desktop /usr/share/applications/xyz.jacobmealey.Notes.desktop
 cp assets/starter.txt $ASSETS_DIR/json/starter.txt
 cp assets/style.css $ASSETS_DIR/style.css
+cp assets/bitmap.png /usr/share/pixmaps/charta.png
 # cp for eventual icon
 cp target/debug/notes $INSTALL_DIR/notes
 
