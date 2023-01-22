@@ -28,7 +28,7 @@ cp assets/starter.txt $ASSETS_DIR/json/starter.txt
 cp assets/style.css $ASSETS_DIR/style.css
 cp assets/bitmap.png $1/usr/share/pixmaps/charta.png
 # cp for eventual icon
-cp target/debug/notes $INSTALL_DIR/notes
+cp target/release/notes $INSTALL_DIR/notes
 
 chmod -R o+w $ASSETS_DIR
 
