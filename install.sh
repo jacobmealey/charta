@@ -21,12 +21,14 @@ fi
 mkdir -p $INSTALL_DIR
 mkdir -p $ASSETS_DIR
 mkdir -p $ASSETS_DIR/json/
+mkdir -p $1/usr/share/applications
+mkdir -p $1/usr/share/pixmaps
 cp assets/xyz.jacobmealey.Notes.desktop $1/usr/share/applications/xyz.jacobmealey.Notes.desktop
 cp assets/starter.txt $ASSETS_DIR/json/starter.txt
 cp assets/style.css $ASSETS_DIR/style.css
 cp assets/bitmap.png $1/usr/share/pixmaps/charta.png
 # cp for eventual icon
-cp target/debug/notes $INSTALL_DIR/notes
+cp target/release/notes $INSTALL_DIR/notes
 
 chmod -R o+w $ASSETS_DIR
 
