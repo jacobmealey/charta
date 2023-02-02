@@ -185,21 +185,13 @@ impl NoteViewObject {
                 SIZE = note.char_count();
             }
 
-
             if is_bullet {
-                note.insert_at_cursor("-  ");
-                return;
+                note.insert_at_cursor("- ");
+            } else if parsing == "-  " { // if it isn't the starting action bail out 
+                println!("Starting bulleted list");
+                note.apply_tag_by_name("bullet", &line_start, &note.iter_at_offset(note.cursor_position()));
+                note.place_cursor(&note.iter_at_offset(note.cursor_position() - 1));
             }
-
-            // if it isn't the starting action bail out
-            if parsing != "-  " {
-                return;
-            }
-            println!("Starting bulleted list");
-            note.apply_tag_by_name("bullet", &line_start, &cursor);
-            cursor.backward_char();
-            note.place_cursor(&cursor);
-
         });
 
 
