@@ -175,11 +175,11 @@ fn build_ui(app: &Application) {
                     break
                 }
             }
-            current_note.buffer().remove_all_tags(&bound_start, &bound_end);
+            current_note.buffer().remove_tag_by_name(action, &bound_start, &bound_end);
             if is_action {
                 return;
             }
-            current_note.buffer().remove_all_tags(&bound_start, &bound_end);
+            current_note.buffer().remove_tag_by_name(action, &bound_start, &bound_end);
             current_note.buffer().apply_tag_by_name(action, &bound_start, &bound_end);
             current_note.serialize();
 

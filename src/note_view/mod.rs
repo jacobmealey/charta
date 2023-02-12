@@ -139,10 +139,6 @@ impl NoteViewObject {
     pub fn setup(&self) {
         self.set_editable(true);
         self.set_wrap_mode(WrapMode::Word);
-        // self.set_left_margin(35);
-        // self.set_right_margin(35);
-        // self.set_top_margin(24);
-        // self.set_bottom_margin(24);
 
         let bold_tag = gtk::TextTag::new(Some("b"));
         bold_tag.set_weight(600);
@@ -155,7 +151,8 @@ impl NoteViewObject {
         let bullet_tag = gtk::TextTag::builder()
                 .name("bullet")
                 .indent_set(true)
-                .indent(10)
+                .indent(-9)
+                .left_margin(10)
                 .build();
 
         self.buffer().tag_table().add(&bullet_tag);
