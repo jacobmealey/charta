@@ -136,7 +136,7 @@ impl NoteViewObject {
         }
     }
 
-    pub fn setup(&self) {
+    pub fn setup(&mut self) {
         self.set_editable(true);
         self.set_wrap_mode(WrapMode::Word);
 
@@ -157,7 +157,9 @@ impl NoteViewObject {
 
         self.buffer().tag_table().add(&bullet_tag);
 
-        self.buffer().connect_changed(|note|  {
+        let vals = Arc::clone(&self.imp().vals);
+
+        self.buffer().connect_changed(move |note|  {
             let mut cursor = note.iter_at_offset(note.cursor_position());
             let mut line_start = note.iter_at_line(cursor.line()).expect("Unable to get line start");
             let parsing = note.slice(&line_start, &cursor, true);
@@ -165,38 +167,43 @@ impl NoteViewObject {
             static mut SIZE: i32 = 0;
             let mut is_bullet = false;
 
-            // PLEASE find a way to this in a safe way? 
-            // The reason its unsafe is the use of a mutable static, we are tracking the size 
-            // of the buffer, and if we are decreasing in size then don't attempt to insert 
-            // another bullet
-            unsafe{
-                for tag in line_start.tags() {
-                    if tag.name().expect("No tag name specified") == "bullet" && note.char_count() >  SIZE && line_start == cursor {
-                        println!("Is bulleted list!");
+            for tag in line_start.tags() {
+                if tag.name().expect("No tag name specified") == "bullet" && 
+                    note.char_count() >  vals.lock().unwrap().size && line_start == cursor {
                         is_bullet = true;
                         break;
                     } else {
                         println!("texttag: {:?}", tag);
                     }
-                }
-
-                SIZE = note.char_count();
             }
 
+            vals.lock().unwrap().size = note.char_count();
+
+            // This... is... terrible :) it's the worst thing i've ever seen:) 
             if is_bullet {
                 note.insert_at_cursor("• ");
             } else if parsing == "- " { // if it isn't the starting action bail out 
                 println!("Starting bulleted list");
                 note.delete(&mut line_start, &mut note.iter_at_offset(note.cursor_position()));
-                note.insert(&mut line_start, "•  ");
-                note.place_cursor(&note.iter_at_offset(note.cursor_position() - 1));
-                line_start = note.iter_at_line(cursor.line()).expect("Unable to get line start");
-                note.apply_tag_by_name("bullet", &line_start, &note.iter_at_offset(note.cursor_position()));
+                note.insert(&mut line_start, "•   ");
+                println!("Updating line start");
+                let line_start = note.iter_at_line(
+                    note.iter_at_offset(
+                        note.cursor_position()).line()
+                    ).expect("Unable to get line start");
+
+                let mut line_end = note.iter_at_line(
+                    note.iter_at_offset(
+                        note.cursor_position()).line()
+                    ).expect("Unable to get line start");
+                line_end.forward_chars(3);
+                println!("Applying bullet tag");
+                note.apply_tag_by_name("bullet", &line_start, &line_end);
+                println!("Moving Cursor");
+                note.place_cursor(&note.iter_at_offset(note.cursor_position() - 2));
             }
         });
 
-
-        //self.add_action(&action_bold);
     }
 
     pub fn set_name(&self, name: &String) {
@@ -255,4 +262,5 @@ pub struct NoteViewData {
     pub serialized: String,
     pub filename: String,
     pub note_id: u32,
+    pub size: i32,
 }
