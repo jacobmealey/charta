@@ -159,7 +159,7 @@ impl NoteViewObject {
 
         self.buffer().connect_changed(|note|  {
             let mut cursor = note.iter_at_offset(note.cursor_position());
-            let line_start = note.iter_at_line(cursor.line()).expect("Unable to get line start");
+            let mut line_start = note.iter_at_line(cursor.line()).expect("Unable to get line start");
             let parsing = note.slice(&line_start, &cursor, true);
             
             static mut SIZE: i32 = 0;
@@ -172,6 +172,7 @@ impl NoteViewObject {
             unsafe{
                 for tag in line_start.tags() {
                     if tag.name().expect("No tag name specified") == "bullet" && note.char_count() >  SIZE && line_start == cursor {
+                        println!("Is bulleted list!");
                         is_bullet = true;
                         break;
                     } else {
@@ -183,11 +184,14 @@ impl NoteViewObject {
             }
 
             if is_bullet {
-                note.insert_at_cursor("- ");
-            } else if parsing == "-  " { // if it isn't the starting action bail out 
+                note.insert_at_cursor("• ");
+            } else if parsing == "- " { // if it isn't the starting action bail out 
                 println!("Starting bulleted list");
-                note.apply_tag_by_name("bullet", &line_start, &note.iter_at_offset(note.cursor_position()));
+                note.delete(&mut line_start, &mut note.iter_at_offset(note.cursor_position()));
+                note.insert(&mut line_start, "•  ");
                 note.place_cursor(&note.iter_at_offset(note.cursor_position() - 1));
+                line_start = note.iter_at_line(cursor.line()).expect("Unable to get line start");
+                note.apply_tag_by_name("bullet", &line_start, &note.iter_at_offset(note.cursor_position()));
             }
         });
 
