@@ -117,7 +117,7 @@ impl NoteViewObject {
         self.buffer().apply_tag_by_name(tag_name, 
                                         &self.buffer().iter_at_offset(tag_start), 
                                         &self.buffer().iter_at_offset(tag_end));        
-        self.load(post.to_string());
+        self.load(post);
     }
 
     pub fn save(&self) {
@@ -151,7 +151,7 @@ impl NoteViewObject {
         let bullet_tag = gtk::TextTag::builder()
                 .name("bullet")
                 .indent_set(true)
-                .indent(-9)
+                .indent(-10)
                 .left_margin(10)
                 .build();
 
@@ -160,11 +160,10 @@ impl NoteViewObject {
         let vals = Arc::clone(&self.imp().vals);
 
         self.buffer().connect_changed(move |note|  {
-            let mut cursor = note.iter_at_offset(note.cursor_position());
+            let cursor = note.iter_at_offset(note.cursor_position());
             let mut line_start = note.iter_at_line(cursor.line()).expect("Unable to get line start");
             let parsing = note.slice(&line_start, &cursor, true);
             
-            static mut SIZE: i32 = 0;
             let mut is_bullet = false;
 
             for tag in line_start.tags() {
@@ -183,10 +182,8 @@ impl NoteViewObject {
             if is_bullet {
                 note.insert_at_cursor("• ");
             } else if parsing == "- " { // if it isn't the starting action bail out 
-                println!("Starting bulleted list");
                 note.delete(&mut line_start, &mut note.iter_at_offset(note.cursor_position()));
                 note.insert(&mut line_start, "•   ");
-                println!("Updating line start");
                 let line_start = note.iter_at_line(
                     note.iter_at_offset(
                         note.cursor_position()).line()
@@ -196,10 +193,9 @@ impl NoteViewObject {
                     note.iter_at_offset(
                         note.cursor_position()).line()
                     ).expect("Unable to get line start");
+
                 line_end.forward_chars(3);
-                println!("Applying bullet tag");
                 note.apply_tag_by_name("bullet", &line_start, &line_end);
-                println!("Moving Cursor");
                 note.place_cursor(&note.iter_at_offset(note.cursor_position() - 2));
             }
         });
